@@ -8,16 +8,23 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Chip: typeof import('./src/components/Chip.vue')['default']
+    DeviceCombo: typeof import('./src/components/DeviceCombo.vue')['default']
     DeviceSvg: typeof import('./src/components/DeviceSvg.vue')['default']
     EmptyState: typeof import('./src/components/EmptyState.vue')['default']
     FilterBar: typeof import('./src/components/FilterBar.vue')['default']
     HillsScene: typeof import('./src/components/HillsScene.vue')['default']
     HomeSection: typeof import('./src/components/HomeSection.vue')['default']
+    ItemCard: typeof import('./src/components/ItemCard.vue')['default']
     PlanCard: typeof import('./src/components/PlanCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Tabbar: typeof import('./src/components/Tabbar.vue')['default']
     Tag: typeof import('./src/components/Tag.vue')['default']
     TopBar: typeof import('./src/components/TopBar.vue')['default']
+    VanButton: typeof import('vant/es')['Button']
+    VanCellGroup: typeof import('vant/es')['CellGroup']
+    VanField: typeof import('vant/es')['Field']
+    VanRadio: typeof import('vant/es')['Radio']
+    VanRadioGroup: typeof import('vant/es')['RadioGroup']
   }
 }
