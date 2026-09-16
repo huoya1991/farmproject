@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>老乡农场 · 设备保养</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#1FA14A;--green-d:#157A38;--green-xd:#0F5E2C;
+  --bg:#F2F7F3;--card:#fff;--line:#E9F0EA;
+  --ink:#1E2B22;--ink2:#5C6B60;--ink3:#93A297;
+  --chip-bg:#E3F3E8;--chip-fg:#1FA14A;
+  --ud-bg:#FDECEA;--ud-fg:#E64A40;
+  --dn-bg:#E3F3E8;--dn-fg:#1FA14A;
+  --ov-bg:#D93025;--ov-fg:#fff;
+  --shadow:0 4px 14px rgba(30,80,50,.07);
+}
+body{background:#E3EBE4;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink)}
+.phone{max-width:375px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 24px rgba(20,60,35,.10);overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:14px;color:var(--ink);outline:none}
+
+/* ===== 导航（表单/详情白底） ===== */
+.navbar{position:sticky;top:0;z-index:30;height:48px;background:#fff;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line)}
+.navbar .tt{font-size:17px;font-weight:600}
+.navbar .back{position:absolute;left:6px;top:0;width:40px;height:48px;border:none;background:none;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.navbar .back svg{width:22px;height:22px}
+
+/* ===== 田园横幅（首页+列表共用山丘场景） ===== */
+.hills{position:absolute;left:0;right:0;bottom:-2px;width:100%;display:block;pointer-events:none}
+
+/* ===== 首页 ===== */
+.home-head{position:relative;overflow:hidden;background:linear-gradient(180deg,#BCE0F2 0%,#D6EDD9 52%,#BFE3C4 100%);padding:12px 16px 72px}
+.home-head .hills{height:128px}
+.capsule{position:absolute;top:10px;right:12px;background:rgba(255,255,255,.55);border-radius:15px;height:30px;display:flex;align-items:center;padding:0 12px;gap:10px;font-size:13px;color:#33543F;z-index:3}
+.brand{position:relative;z-index:2;display:flex;align-items:center;gap:10px;margin-top:30px}
+.brand .logo{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(30,80,50,.14);flex-shrink:0}
+.brand .logo svg{width:26px;height:26px}
+.brand .bn{font-size:21px;font-weight:800;color:var(--green-xd);letter-spacing:1px}
+.brand .bs{font-size:11px;color:#3E6B4C;margin-top:3px}
+.brand .htr{margin-left:auto;width:96px;height:66px;flex-shrink:0}
+.brand .htr svg{width:100%;height:100%}
+.weather{display:flex;gap:8px;margin-top:16px;position:relative;z-index:2}
+.wtile{flex:1;background:rgba(255,255,255,.6);border-radius:12px;padding:9px 10px;display:flex;align-items:center;gap:8px}
+.wtile .cl{font-size:20px}
+.wtile .d1{font-size:13px;color:var(--ink);font-weight:600}
+.wtile .d2{font-size:11px;color:var(--ink3)}
+.stats{background:#fff;border:1px solid var(--line);border-radius:16px;margin:-42px 16px 0;padding:16px 8px;display:flex;position:relative;z-index:3;box-shadow:var(--shadow)}
+.stat{flex:1;text-align:center}
+.stat .t{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--ink3)}
+.stat .ic{width:20px;height:20px;border-radius:6px;background:var(--dn-bg);color:var(--green);font-size:12px;display:flex;align-items:center;justify-content:center}
+.stat .v1{font-size:17px;font-weight:700;color:var(--ink);margin-top:8px}
+.stat .v2{font-size:12px;font-weight:600;color:var(--green);margin-top:5px}
+.section-title{display:flex;align-items:center;margin:24px 16px 14px;font-size:15px;font-weight:700;color:var(--ink)}
+.section-title::before{content:"";width:4px;height:14px;border-radius:2px;background:linear-gradient(180deg,#37B45C,#157A38);margin-right:8px}
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);row-gap:20px;padding:0 10px}
+.icon-item{display:flex;flex-direction:column;align-items:center;gap:7px;border:none;background:none}
+.icon-circle{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 12px rgba(30,80,50,.16)}
+.icon-item .lb{font-size:12px;color:var(--ink2)}
+.g-orange{background:linear-gradient(135deg,#F6B352,#E8833A)}
+.g-green{background:linear-gradient(135deg,#43C465,#1FA14A)}
+.g-blue{background:linear-gradient(135deg,#5FB9E8,#2A7FC1)}
+.g-purple{background:linear-gradient(135deg,#A493EE,#7459E0)}
+.g-teal{background:linear-gradient(135deg,#4CCBB6,#25A08C)}
+.g-gold{background:linear-gradient(135deg,#F2C14E,#DE9B23)}
+
+/* ===== 底部 tabbar（参考图五件套） ===== */
+.tabbar{position:fixed;bottom:0;left:0;right:0;max-width:375px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;z-index:40}
+.tabbar button{flex:1;border:none;background:none;padding:7px 0 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#9AA1AD}
+.tabbar button.on{color:var(--green);font-weight:600}
+.tabbar svg{width:22px;height:22px}
+
+/* ===== 列表页 ===== */
+.hero-banner{position:relative;height:186px;overflow:hidden;background:linear-gradient(180deg,#BCE0F2 0%,#D8EEDA 58%,#C6E7CA 100%)}
+.hero-banner .hills{height:122px}
+.hb-nav{position:relative;z-index:5;display:flex;align-items:center;height:48px;padding:0 12px;gap:8px}
+.hb-back{width:32px;height:32px;border:none;background:rgba(255,255,255,.65);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0}
+.hb-back svg{width:19px;height:19px}
+.hb-title{flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--ink)}
+.hb-add{border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;border-radius:16px;padding:7px 15px;box-shadow:0 4px 10px rgba(21,122,56,.35);flex-shrink:0}
+.hb-brand{position:relative;z-index:4;display:flex;align-items:center;gap:10px;padding:8px 16px 0}
+.hb-logo{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(30,80,50,.14);flex-shrink:0}
+.hb-logo svg{width:24px;height:24px}
+.hb-name{font-size:19px;font-weight:800;color:var(--green-xd);letter-spacing:1px}
+.hb-slogan{font-size:11px;color:#3E6B4C;margin-top:3px}
+.hb-tractor{position:absolute;right:2px;bottom:12px;width:158px;height:104px;z-index:3}
+.hb-tractor svg{width:100%;height:100%}
+.sheet{position:relative;z-index:6;margin-top:-22px;background:#fff;border-radius:20px 20px 0 0;padding:14px 0 0;min-height:calc(100vh - 164px)}
+.page-list .sheet{padding-bottom:76px}
+.search{margin:0 14px 10px;position:relative}
+.search input{width:100%;height:38px;border:1px solid var(--line);border-radius:19px;background:#F4F8F4;padding:0 14px 0 36px;font-size:13px}
+.search input::placeholder{color:#9AB0A0}
+.search .sic{position:absolute;left:12px;top:10px;width:17px;height:17px;color:#9AB0A0}
+.search .sic svg{width:100%;height:100%}
+.filter-row{display:flex;gap:8px;margin:0 14px 4px;position:relative;align-items:center}
+.fchip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 8px;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.fchip .cv{max-width:60px;overflow:hidden;text-overflow:ellipsis}
+.fchip.on{border-color:var(--green);color:var(--green);font-weight:600;background:#F2FAF4}
+.fchip svg{width:10px;height:10px;flex-shrink:0}
+.freset{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:4px;flex-shrink:0}
+.freset svg{width:13px;height:13px}
+.fdrop{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;box-shadow:0 10px 28px rgba(20,60,35,.16);z-index:35;overflow:hidden;border:1px solid var(--line)}
+.fdrop .opt{padding:11px 14px;font-size:13px;color:var(--ink);display:flex;align-items:center;border-bottom:1px solid #F2F6F2}
+.fdrop .opt:last-child{border-bottom:none}
+.fdrop .opt.on{color:var(--green);font-weight:600}
+.fdrop .opt .ck{margin-left:auto;color:var(--green);width:14px;height:14px}
+.fdrop .opt .ck svg{width:100%;height:100%}
+.list-body{margin-top:10px}
+.dvcard{background:#fff;border:1px solid var(--line);border-radius:14px;margin:0 14px 12px;padding:12px 12px 0;box-shadow:var(--shadow);cursor:pointer}
+.dc-top{display:flex;gap:10px}
+.dc-img{width:64px;height:64px;border-radius:12px;background:linear-gradient(160deg,#F2F9F3,#E2F1E6);border:1px solid #E4F0E6;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dc-img svg{width:56px;height:56px}
+.dc-main{flex:1;min-width:0}
+.dc-line1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dc-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dc-chip{background:var(--chip-bg);color:var(--chip-fg);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600}
+.dc-cnt{font-size:11px;color:var(--ink3);margin-left:auto;flex-shrink:0}
+.dc-row{font-size:12px;color:var(--ink2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;flex-shrink:0;padding-bottom:2px}
+.dc-arrow{color:#C2CCC4;font-size:18px;line-height:1;font-family:serif}
+.dc-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-size:11px;padding:3px 9px;border-radius:8px;font-weight:600;white-space:nowrap}
+.tag-undone{background:var(--ud-bg);color:var(--ud-fg)}
+.tag-done{background:var(--dn-bg);color:var(--dn-fg)}
+.tag-overdue{background:var(--ov-bg);color:var(--ov-fg)}
+.dc-stats{display:flex;border-top:1px solid #F0F5F0;margin-top:10px;padding:9px 0 11px}
+.ds{flex:1;display:flex;align-items:center;gap:6px;justify-content:center;min-width:0}
+.ds+.ds{border-left:1px solid #F0F5F0}
+.ds-ic{width:15px;height:15px;color:#8FB89B;flex-shrink:0}
+.ds-ic svg{width:100%;height:100%}
+.ds-tx{display:flex;flex-direction:column;min-width:0}
+.ds-lb{font-size:10px;color:var(--ink3)}
+.ds-vl{font-size:13px;font-weight:700;color:var(--ink)}
+.ds-vl.late{color:#D93025}
+.list-count{text-align:center;font-size:12px;color:var(--ink3);padding:0 0 18px}
+.empty{text-align:center;color:var(--ink3);font-size:13px;padding:52px 0;line-height:2}
+.empty .eico{font-size:36px}
+
+/* ===== 卡片与单元（表单/详情共用） ===== */
+.page{padding-bottom:20px}
+.page-home{padding-bottom:70px}
+.page-form,.page-detail{padding-bottom:90px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;margin:10px 14px 0;box-shadow:var(--shadow);overflow:hidden}
+.card-head{display:flex;align-items:center;font-size:15px;font-weight:700;color:var(--ink);padding:14px 14px 8px}
+.card-head::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:8px;box-shadow:0 0 0 3px var(--dn-bg)}
+.cell{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid #F2F6F2;position:relative}
+.cell:last-child{border-bottom:none}
+.cell-label{width:96px;flex-shrink:0;font-size:14px;color:var(--ink2)}
+.req::before{content:"*";color:#D9534F;margin-right:2px}
+.cell .ctl{flex:1;display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.cell input[type=text],.cell input[type=date]{border:none;text-align:right;flex:1;min-width:0;background:none}
+.cell input::placeholder{color:#B9C4BB}
+.cell-stack{position:relative}
+.dropdown{position:absolute;left:10px;right:10px;top:100%;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(20,60,35,.16);z-index:25;max-height:220px;overflow:auto}
+.dropdown .cand{padding:11px 12px;border-bottom:1px solid #F2F6F2;display:flex;flex-direction:column;gap:2px}
+.dropdown .cand:last-child{border-bottom:none}
+.dropdown .c1{font-size:14px;color:var(--ink);font-weight:600}
+.dropdown .c2{font-size:12px;color:var(--ink3)}
+.dropdown .none{padding:14px;font-size:12px;color:var(--ink3);text-align:center}
+.hint-bar{margin:10px 14px 0;padding:10px 12px;background:var(--dn-bg);color:var(--green-xd);border-radius:10px;font-size:12px;display:flex;gap:6px;align-items:flex-start}
+.hint-bar::before{content:"ⓘ";font-size:12px}
+.err input,.err textarea{border:1px solid #D9534F !important;border-radius:6px;background:#FFF8F7}
+
+/* ===== 保养项 ===== */
+.items-wrap{padding:4px 12px 0}
+.item-card{background:#F7FAF7;border:1px solid #E4EEE5;border-radius:12px;padding:12px;margin-top:10px}
+.item-card.err{border-color:#D9534F;background:#FFF8F7}
+.item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.item-no{font-size:11px;font-weight:700;color:var(--green);background:var(--dn-bg);border-radius:6px;padding:3px 8px}
+.item-del{width:22px;height:22px;border-radius:50%;border:none;background:#E4EEE5;color:var(--ink3);font-size:15px;line-height:1}
+.item-del:disabled{opacity:.4}
+.item-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.item-row:first-of-type{margin-top:0}
+.ilabel{width:52px;flex-shrink:0;font-size:12px;color:var(--ink3)}
+.ictl{flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.icv{width:74px;border:1px solid #DCE7DD;border-radius:8px;padding:7px 8px;text-align:right;background:#fff}
+.icu{border:1px solid #DCE7DD;border-radius:8px;padding:7px 4px;background:#fff;flex:0 0 72px;text-align:center}
+.idate{flex:1;border:1px solid #DCE7DD;border-radius:8px;padding:7px 8px;background:#fff;text-align:right;min-width:0}
+textarea.icontent{flex:1;height:52px;border:1px solid #DCE7DD;border-radius:8px;padding:8px;font-size:13px;resize:none;background:#fff;min-width:0}
+textarea.icontent::placeholder{color:#B9C4BB}
+.add-item{display:block;width:calc(100% - 24px);margin:10px 12px 12px;border:1px dashed #A9D4B4;border-radius:12px;background:#F4FAF5;color:var(--green);font-size:14px;font-weight:600;padding:11px 0}
+
+/* ===== 分段选择 / 按钮 ===== */
+.seg{display:flex;border:1px solid var(--green);border-radius:9px;overflow:hidden;width:156px}
+.seg-item{flex:1;border:none;background:#fff;color:var(--green);font-size:13px;padding:7px 0;font-weight:600}
+.seg-item.on{background:linear-gradient(135deg,#37B45C,#157A38);color:#fff}
+.btnbar{position:fixed;bottom:0;left:0;right:0;max-width:375px;margin:0 auto;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;z-index:40}
+.btn-primary{flex:1;border:none;border-radius:12px;background:linear-gradient(135deg,#37B45C,#157A38);color:#fff;font-size:16px;font-weight:600;padding:12px 0;letter-spacing:2px;box-shadow:0 6px 14px rgba(31,161,74,.3)}
+.btn-ghost{flex:1;border:1px solid var(--green);border-radius:12px;background:#fff;color:var(--green);font-size:16px;font-weight:600;padding:12px 0}
+
+/* ===== 详情 ===== */
+.hero{background:#fff;border:1px solid var(--line);border-radius:14px;margin:12px 14px 0;padding:14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start}
+.hero-img{width:64px;height:64px;border-radius:12px;background:linear-gradient(160deg,#F2F9F3,#E2F1E6);border:1px solid #E4F0E6;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hero-img svg{width:56px;height:56px}
+.hero-info{flex:1;min-width:0}
+.hero .hn{font-size:17px;font-weight:800}
+.hero .hs{font-size:12px;color:var(--ink2);margin-top:5px}
+.hero .hs .dc-chip{margin-right:6px}
+.hero-tags{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
+.dcell{display:flex;padding:13px 14px;border-bottom:1px solid #F2F6F2;font-size:14px}
+.dcell:last-child{border-bottom:none}
+.dcell .dl{width:96px;flex-shrink:0;color:var(--ink3)}
+.dcell .dv{flex:1;text-align:right;color:var(--ink);white-space:pre-line}
+.iv-wrap{padding:4px 12px 12px}
+.iv-item{background:#F7FAF7;border:1px solid #E4EEE5;border-radius:12px;padding:12px;margin-top:10px}
+.iv-top{display:flex;gap:10px;align-items:flex-start}
+.iv-no{width:20px;height:20px;border-radius:50%;background:var(--dn-bg);color:var(--green);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.iv-content{flex:1;font-size:14px;font-weight:600;color:var(--ink);line-height:1.5}
+.iv-meta{display:flex;align-items:center;gap:8px;margin-top:9px;padding-left:30px}
+.iv-chip{font-size:11px;color:var(--green);background:var(--dn-bg);border-radius:6px;padding:3px 8px;font-weight:600}
+.iv-next{font-size:12px;color:var(--ink3)}
+.iv-next.late{color:#D93025;font-weight:600}
+#toast{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:rgba(23,40,28,.88);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;display:none;max-width:280px;text-align:center}
+</style>
+</head>
+<body>
+<div class="phone" id="app"></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ===== 模拟后台配置与台账（生产环境对应 sys_dict 字典表与设备台账接口） ===== */
+var SYS_DICT = { maint_cycle_unit: ['小时', '天', '公里'] };
+var CURRENT_USER = '王强';
+var LS_KEY = 'lx_maint_plans_v3';
+
+/* ===== SVG 田园设备插画库 ===== */
+var DEV_SVG = {
+  tractor: '<svg viewBox="0 0 64 64"><rect x="24" y="10" width="18" height="18" rx="2" fill="#2E9E4F"/><rect x="27" y="13" width="12" height="9" rx="1" fill="#BFE8F5"/><rect x="12" y="26" width="36" height="12" rx="3" fill="#37B45C"/><rect x="46" y="20" width="4" height="10" rx="1" fill="#237A3E"/><rect x="40" y="22" width="12" height="8" rx="2" fill="#2E9E4F"/><circle cx="22" cy="42" r="12" fill="#2B2B2B"/><circle cx="22" cy="42" r="6.5" fill="#F2C230"/><circle cx="22" cy="42" r="2" fill="#C99516"/><circle cx="49" cy="46" r="8" fill="#2B2B2B"/><circle cx="49" cy="46" r="4" fill="#F2C230"/></svg>',
+  harvester: '<svg viewBox="0 0 64 64"><rect x="2" y="40" width="16" height="6" rx="2" fill="#C23B3B"/><path d="M3 46l3 6 3-6 3 6 3-6 3 6" stroke="#C23B3B" stroke-width="2.4" fill="none" stroke-linejoin="round"/><rect x="16" y="32" width="8" height="12" rx="2" fill="#D64545"/><rect x="22" y="24" width="28" height="18" rx="3" fill="#E85A4F"/><rect x="26" y="12" width="14" height="14" rx="2" fill="#F5F2EA"/><rect x="28" y="15" width="10" height="8" rx="1" fill="#BFE8F5"/><rect x="42" y="16" width="10" height="8" rx="2" fill="#F5F2EA"/><rect x="50" y="8" width="4" height="14" rx="2" fill="#C23B3B" transform="rotate(-28 52 15)"/><circle cx="28" cy="46" r="9" fill="#2B2B2B"/><circle cx="28" cy="46" r="4.5" fill="#C9CDD2"/><circle cx="46" cy="48" r="7" fill="#2B2B2B"/><circle cx="46" cy="48" r="3.5" fill="#C9CDD2"/></svg>',
+  tiller: '<svg viewBox="0 0 64 64"><path d="M16 30 L28 12 L40 10" stroke="#7A828C" stroke-width="3.5" fill="none" stroke-linecap="round"/><rect x="10" y="24" width="17" height="12" rx="3" fill="#D64545"/><rect x="13" y="20" width="8" height="6" rx="2" fill="#B83636"/><rect x="25" y="28" width="9" height="10" rx="2" fill="#B83636"/><path d="M28 42 a14 14 0 0 1 28 0 l0 4 -28 0 z" fill="#E85A4F"/><circle cx="42" cy="42" r="9" fill="#8A929C"/><path d="M42 33v-4M42 51v4M33 42h-4M51 42h4M36 36l-3-3M48 36l3-3M36 48l-3 3M48 48l3 3" stroke="#6E7480" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  pump: '<svg viewBox="0 0 64 64"><rect x="12" y="48" width="40" height="6" rx="2" fill="#5B6570"/><rect x="32" y="26" width="18" height="22" rx="4" fill="#3E7CB1"/><path d="M35 31h12M35 35h12M35 39h12" stroke="#2E6390" stroke-width="2"/><circle cx="23" cy="37" r="13" fill="#4C9BD8"/><circle cx="23" cy="37" r="6" fill="#2E6390"/><circle cx="23" cy="37" r="2.4" fill="#BFE0F5"/><rect x="6" y="33" width="8" height="8" rx="2" fill="#3E7CB1"/><rect x="19" y="18" width="8" height="10" rx="2" fill="#3E7CB1"/><rect x="17" y="15" width="12" height="4" rx="2" fill="#2E6390"/></svg>',
+  spreader: '<svg viewBox="0 0 64 64"><path d="M12 12h40l-7 22H19z" fill="#37B45C"/><path d="M12 12h40l-2.4 7H14.4z" fill="#2E9E4F"/><rect x="27" y="34" width="10" height="7" rx="1" fill="#237A3E"/><ellipse cx="32" cy="45" rx="12" ry="4" fill="#8A929C"/><ellipse cx="32" cy="44" rx="8" ry="2.6" fill="#6E7480"/><path d="M19 36l-7 13M45 36l7 13" stroke="#5B6570" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="50" r="5.5" fill="#2B2B2B"/><circle cx="12" cy="50" r="2.4" fill="#F2C230"/><circle cx="52" cy="50" r="5.5" fill="#2B2B2B"/><circle cx="52" cy="50" r="2.4" fill="#F2C230"/></svg>',
+  drone: '<svg viewBox="0 0 64 64"><path d="M32 30L16 16M32 30l16-14M32 30L16 48M32 30l16 18" stroke="#7A828C" stroke-width="3" stroke-linecap="round"/><ellipse cx="14" cy="14" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="50" cy="14" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="14" cy="50" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="50" cy="50" rx="9" ry="3" fill="#2B2B2B"/><rect x="24" y="24" width="16" height="11" rx="4" fill="#E85A4F"/><circle cx="32" cy="29" r="2" fill="#BFE8F5"/><rect x="27" y="35" width="10" height="9" rx="2" fill="#F5F2EA"/><path d="M22 44h20" stroke="#8A929C" stroke-width="2" stroke-linecap="round"/></svg>',
+  generic: '<svg viewBox="0 0 64 64"><rect x="14" y="22" width="30" height="16" rx="4" fill="#8FB89B"/><rect x="40" y="26" width="10" height="8" rx="2" fill="#7BA888"/><circle cx="20" cy="44" r="9" fill="#2B2B2B"/><circle cx="20" cy="44" r="4" fill="#C9CDD2"/><circle cx="46" cy="46" r="6" fill="#2B2B2B"/><circle cx="46" cy="46" r="3" fill="#C9CDD2"/></svg>'
+};
+
+/* ===== SVG 图标库 ===== */
+var ICONS = {
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>',
+  funnel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 5h18l-7 8v5l-4 2v-7z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 9.5l6 6 6-6"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>',
+  leaf: '<svg viewBox="0 0 24 24"><path d="M12 22v-8" stroke="#157A38" stroke-width="2" stroke-linecap="round"/><path d="M12 14c0-4.5 3.2-7 8-7 0 5-3.2 7-8 7z" fill="#37B45C"/><path d="M12 14c0-3.2-2.6-5-6-5 0 3.6 2.6 5 6 5z" fill="#7BCF95"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v11h5v-6h4v6h5V10"/></svg>',
+  tractorTab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="16.5" r="3.6"/><circle cx="18" cy="17.5" r="2.6"/><path d="M7.5 12.9V8h5.8l2.2 6.4"/><path d="M11.1 16.5h4.3"/><path d="M13.3 8V5h3"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5a3 3 0 0 1 6 0"/><path d="M9.2 13.2l2 2 3.8-4"/></svg>',
+  wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 6.2a4.2 4.2 0 0 0-5.6 5.6L4 17l3 3 5.2-5.2a4.2 4.2 0 0 0 5.6-5.6l-2.9 2.9-2.3-.8-.8-2.3z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'
+};
+
+/* ===== 田园山丘横幅场景 ===== */
+var HILLS = '<svg class="hills" viewBox="0 0 375 150" preserveAspectRatio="xMidYMax slice">' +
+  '<circle cx="52" cy="24" r="13" fill="#FFF3C4" opacity=".95"/>' +
+  '<ellipse cx="128" cy="30" rx="20" ry="7" fill="#fff" opacity=".85"/>' +
+  '<ellipse cx="312" cy="18" rx="15" ry="6" fill="#fff" opacity=".75"/>' +
+  '<ellipse cx="220" cy="42" rx="12" ry="5" fill="#fff" opacity=".6"/>' +
+  '<path d="M0 88 Q60 58 125 80 T250 76 T375 86 V150 H0 Z" fill="#A9DCB4"/>' +
+  '<path d="M0 108 Q80 82 165 102 T375 104 V150 H0 Z" fill="#8AD09C"/>' +
+  '<path d="M0 128 Q100 110 205 124 T375 122 V150 H0 Z" fill="#6FC385"/>' +
+  '<g><rect x="282" y="82" width="28" height="19" rx="1" fill="#FFF7EC"/><path d="M278 84l18-13 18 13z" fill="#E0644A"/><rect x="292" y="90" width="7" height="11" fill="#C98A5A"/></g>' +
+  '<g><rect x="262" y="88" width="3" height="12" fill="#8A6A4A"/><circle cx="263" cy="82" r="9" fill="#4FAE66"/><circle cx="255" cy="88" r="6" fill="#5BBF74"/></g>' +
+  '<g><rect x="326" y="92" width="3" height="10" fill="#8A6A4A"/><circle cx="327" cy="86" r="7" fill="#4FAE66"/></g>' +
+  '<g><rect x="38" y="96" width="3" height="11" fill="#8A6A4A"/><circle cx="39" cy="90" r="8" fill="#5BBF74"/></g>' +
+  '</svg>';
+
+/* ===== 设备台账（mock，含类型与插画映射） ===== */
+var DEVICES = [
+  { id: 'D001', name: '拖拉机', code: 'TR001', model: '约翰迪尔 6B-1204', usage: '耕地作业', owner: '张三', type: '拖拉机', svg: 'tractor' },
+  { id: 'D002', name: '联合收割机', code: 'LHS002', model: '沃得 4LZ-5.0', usage: '粮食收割', owner: '李四', type: '收割机', svg: 'harvester' },
+  { id: 'D003', name: '旋耕机', code: 'XGJ003', model: '东风 1GQN-200', usage: '土地旋耕', owner: '王五', type: '旋耕机', svg: 'tiller' },
+  { id: 'D004', name: '水泵', code: 'SB004', model: '新界 80QZ-60', usage: '农田灌溉', owner: '赵六', type: '水泵', svg: 'pump' },
+  { id: 'D005', name: '撒肥机', code: 'SFJ005', model: '中联 2F-1000', usage: '施肥作业', owner: '陈七', type: '撒肥机', svg: 'spreader' },
+  { id: 'D006', name: '植保无人机', code: 'UAV006', model: '大疆 T40', usage: '植保喷洒', owner: '王强', type: '无人机', svg: 'drone' }
+];
+
+/* ===== 种子数据（迭代 3：对齐参考图，保留 items[] 结构） ===== */
+function seedPlans() {
+  return [
+    { id: '1', deviceId: 'D001', deviceName: '拖拉机', deviceCode: 'TR001', modelSpec: '约翰迪尔 6B-1204', usage: '耕地作业',
+      items: [
+        { content: '更换机油与机滤', cycleValue: 250, cycleUnit: '小时', nextDate: '2026-10-10' },
+        { content: '检查轮胎气压与螺栓紧固', cycleValue: 30, cycleUnit: '天', nextDate: '2026-10-25' },
+        { content: '清洁空气滤清器', cycleValue: 500, cycleUnit: '小时', nextDate: '2026-12-20' }
+      ],
+      thisDate: '2026-08-10', owner: '张三', status: 'undone', createdAt: '2026-08-10T08:00:00', updatedAt: '2026-08-10T08:00:00' },
+    { id: '2', deviceId: 'D002', deviceName: '联合收割机', deviceCode: 'LHS002', modelSpec: '沃得 4LZ-5.0', usage: '粮食收割',
+      items: [
+        { content: '割台链条润滑与张紧', cycleValue: 200, cycleUnit: '小时', nextDate: '2026-09-30' },
+        { content: '脱粒滚筒间隙检查', cycleValue: 400, cycleUnit: '小时', nextDate: '2026-11-15' }
+      ],
+      thisDate: '2026-08-15', owner: '李四', status: 'done', createdAt: '2026-08-15T08:00:00', updatedAt: '2026-08-15T08:00:00' },
+    { id: '3', deviceId: 'D003', deviceName: '旋耕机', deviceCode: 'XGJ003', modelSpec: '东风 1GQN-200', usage: '土地旋耕',
+      items: [ { content: '旋耕刀片检查更换', cycleValue: 100, cycleUnit: '小时', nextDate: '2026-10-01' } ],
+      thisDate: '2026-08-01', owner: '王五', status: 'undone', createdAt: '2026-08-01T08:00:00', updatedAt: '2026-08-01T08:00:00' },
+    { id: '4', deviceId: 'D004', deviceName: '水泵', deviceCode: 'SB004', modelSpec: '新界 80QZ-60', usage: '农田灌溉',
+      items: [ { content: '轴承润滑与密封检查', cycleValue: 500, cycleUnit: '小时', nextDate: '2026-12-20' } ],
+      thisDate: '2026-07-20', owner: '赵六', status: 'undone', createdAt: '2026-07-20T08:00:00', updatedAt: '2026-07-20T08:00:00' },
+    { id: '5', deviceId: 'D005', deviceName: '撒肥机', deviceCode: 'SFJ005', modelSpec: '中联 2F-1000', usage: '施肥作业',
+      items: [ { content: '撒播链条张紧与润滑', cycleValue: 300, cycleUnit: '小时', nextDate: '2026-11-12' } ],
+      thisDate: '2026-08-12', owner: '陈七', status: 'done', createdAt: '2026-08-12T08:00:00', updatedAt: '2026-08-12T08:00:00' },
+    { id: '6', deviceId: 'D006', deviceName: '植保无人机', deviceCode: 'UAV006', modelSpec: '大疆 T40', usage: '植保喷洒',
+      items: [
+        { content: '桨叶检查更换', cycleValue: 60, cycleUnit: '天', nextDate: '2026-09-10' },
+        { content: '喷洒系统校准', cycleValue: 90, cycleUnit: '天', nextDate: '2026-11-01' }
+      ],
+      thisDate: '2026-06-10', owner: '王强', status: 'undone', createdAt: '2026-06-10T08:00:00', updatedAt: '2026-06-10T08:00:00' }
+  ];
+}
+function savePlans(a) { localStorage.setItem(LS_KEY, JSON.stringify(a)); }
+function loadPlans() {
+  try { var r = localStorage.getItem(LS_KEY); if (r) return JSON.parse(r); } catch (e) {}
+  var s = seedPlans(); savePlans(s); return s;
+}
+
+/* ===== 工具函数 ===== */
+function todayStr() { var d = new Date(); var p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function lastMaintDate(code, excludeId) {
+  if (!code) return null;
+  var ds = loadPlans().filter(function (p) { return p.deviceCode === code && p.id !== excludeId; }).map(function (p) { return p.thisDate; }).sort();
+  return ds.length ? ds[ds.length - 1] : null;
+}
+function planNextItem(p) { return p.items.slice().sort(function (a, b) { return a.nextDate < b.nextDate ? -1 : 1; })[0]; }
+function planNextDate(p) { return planNextItem(p).nextDate; }
+function isOverdue(p) { return p.status === 'undone' && p.items.some(function (i) { return i.nextDate < todayStr(); }); }
+function cycleText(it) { return '每 ' + it.cycleValue + ' ' + it.cycleUnit; }
+function cycleShort(it) { return it.cycleValue + ' ' + it.cycleUnit; }
+function unique(a) { var r = []; a.forEach(function (x) { if (r.indexOf(x) < 0) r.push(x); }); return r; }
+function deviceOf(p) { return DEVICES.find(function (d) { return d.id === p.deviceId; }) || DEVICES.find(function (d) { return d.code === p.deviceCode; }) || null; }
+function deviceSvg(p) { var d = deviceOf(p); return DEV_SVG[(d && d.svg) || 'generic'] || DEV_SVG.generic; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var toastTimer = null;
+function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.style.display = 'none'; }, 1800); }
+function el(id) { return document.getElementById(id); }
+
+/* ===== 路由 ===== */
+function parseHash() {
+  var h = location.hash || '#/home';
+  if (h.charAt(0) === '#') h = h.slice(1);
+  var qi = h.indexOf('?');
+  var path = qi >= 0 ? h.slice(0, qi) : h;
+  var params = {};
+  if (qi >= 0) h.slice(qi + 1).split('&').forEach(function (kv) { var i = kv.indexOf('='); var k = kv.slice(0, i); if (k) params[k] = decodeURIComponent(kv.slice(i + 1)); });
+  return { path: path, params: params };
+}
+function render() {
+  var r = parseHash(); var app = el('app'); window.scrollTo(0, 0);
+  if (r.path === '/plan/list') { app.innerHTML = viewList(); bindList(); }
+  else if (r.path === '/plan/form') { app.innerHTML = viewForm(r.params.id); bindForm(r.params.id); }
+  else if (r.path === '/plan/detail') { app.innerHTML = viewDetail(r.params.id); bindDetail(r.params.id); }
+  else { app.innerHTML = viewHome(); }
+  bindRoutes(app);
+}
+function bindRoutes(root) {
+  root.querySelectorAll('[data-route]').forEach(function (b) { b.onclick = function () { location.hash = b.getAttribute('data-route'); }; });
+  root.querySelectorAll('[data-toast]').forEach(function (b) { b.onclick = function () { toast(b.getAttribute('data-toast')); }; });
+}
+window.addEventListener('hashchange', render);
+document.addEventListener('click', function (e) {
+  var d = document.getElementById('fdrop');
+  if (d && d.style.display !== 'none' && !e.target.closest('#frow')) d.style.display = 'none';
+});
+
+/* ===== 首页 ===== */
+var HOME_SECTIONS = [
+  { title: '农事生产', items: [['种植计划', '计', 'g-orange', null], ['农事上报', '报', 'g-green', null], ['供货计划', '供', 'g-orange', null], ['专家问答', '问', 'g-blue', null], ['智能问答', 'Ai', 'g-green', null], ['种植标准', '标', 'g-teal', null], ['病虫害识别', '虫', 'g-purple', null], ['病虫害库', '库', 'g-blue', null]] },
+  { title: '农资进销存', items: [['农资购买', '购', 'g-green', null], ['农资领用', '领', 'g-green', null], ['有机肥管理', '肥', 'g-green', null], ['农资盘点', '盘', 'g-blue', null], ['农资入库', '入', 'g-gold', null], ['农资出库', '出', 'g-teal', null], ['农资退货', '退', 'g-orange', null], ['农场农资', '场', 'g-purple', null]] },
+  { title: '设备保养', items: [['保养计划', '保', 'g-orange', '#/plan/list'], ['点检记录', '点', 'g-green', 'build'], ['维修记录', '修', 'g-blue', 'build'], ['设备配件', '配', 'g-purple', 'build']] },
+  { title: '任务管理', items: [['任务下达', '任', 'g-gold', null], ['巡田', '巡', 'g-blue', null], ['巡检', '检', 'g-purple', null], ['任务上报', '报', 'g-green', null]] }
+];
+function iconItem(it) {
+  var lb = it[0], gl = it[1], g = it[2], act = it[3];
+  var attr = act === '#/plan/list' ? 'data-route="#/plan/list"' : (act === 'build' ? 'data-toast="功能建设中"' : 'data-toast="原型仅开放设备保养模块"');
+  return '<button class="icon-item" ' + attr + '><span class="icon-circle ' + g + '">' + esc(gl) + '</span><span class="lb">' + esc(lb) + '</span></button>';
+}
+function tabbarHtml(on) {
+  var tabs = [['首页', ICONS.home, '#/home'], ['设备', ICONS.tractorTab, '#/plan/list'], ['点检', ICONS.clipboard, null], ['维修', ICONS.wrench, null], ['我的', ICONS.user, null]];
+  return '<div class="tabbar">' + tabs.map(function (t) {
+    var attr = t[2] ? 'data-route="' + t[2] + '"' : 'data-toast="功能建设中"';
+    return '<button class="' + (t[0] === on ? 'on' : '') + '" ' + attr + '>' + t[1] + '<span>' + t[0] + '</span></button>';
+  }).join('') + '</div>';
+}
+function viewHome() {
+  var weather = [['周三', '09/16'], ['周四', '09/17'], ['周五', '09/18']].map(function (w) {
+    return '<div class="wtile"><span class="cl">☁</span><span><div class="d1">' + w[0] + '</div><div class="d2">' + w[1] + '</div></span></div>';
+  }).join('');
+  return '<div class="page page-home">' +
+    '<div class="home-head">' + HILLS + '<div class="capsule"><span>•••</span><span>◎</span></div>' +
+    '<div class="brand"><span class="logo">' + ICONS.leaf + '</span><div><div class="bn">老乡农场</div><div class="bs">数字化农场管理平台</div></div><div class="htr">' + DEV_SVG.tractor + '</div></div>' +
+    '<div class="weather">' + weather + '</div></div>' +
+    '<div class="stats">' +
+    '<div class="stat"><div class="t"><span class="ic">田</span>田块总数量</div><div class="v1">534块</div><div class="v2">14796 亩</div></div>' +
+    '<div class="stat"><div class="t"><span class="ic">苗</span>当前种植面积</div><div class="v1">33.1%</div><div class="v2">4904 亩</div></div>' +
+    '<div class="stat"><div class="t"><span class="ic">穗</span>种植作物</div><div class="v1">5作物</div><div class="v2">5 品种</div></div>' +
+    '</div>' +
+    HOME_SECTIONS.map(function (s) {
+      return '<div class="section-title">' + esc(s.title) + '</div><div class="icon-grid">' + s.items.map(iconItem).join('') + '</div>';
+    }).join('') +
+    '</div>' + tabbarHtml('首页');
+}
+
+/* ===== 列表 ===== */
+var listState = { kw: '', type: 'all', status: 'all', owner: 'all' };
+var FDEFS = [
+  { key: 'type', all: '设备类型', opts: function () { return unique(DEVICES.map(function (d) { return d.type; })); } },
+  { key: 'status', all: '保养完成情况', opts: function () { return ['undone', 'done']; } },
+  { key: 'owner', all: '负责人', opts: function () { return unique(DEVICES.map(function (d) { return d.owner; })); } }
+];
+function fOptLabel(key, v) {
+  if (v === 'all') return '全部';
+  if (key === 'status') return v === 'done' ? '已完成' : '未完成';
+  return v;
+}
+function viewList() {
+  return '<div class="page page-list">' +
+    '<div class="hero-banner">' + HILLS +
+      '<div class="hb-nav"><button class="hb-back" data-route="#/home">' + ICONS.chev + '</button><span class="hb-title">保养计划</span><button class="hb-add" data-route="#/plan/form">新增</button></div>' +
+      '<div class="hb-brand"><span class="hb-logo">' + ICONS.leaf + '</span><div><div class="hb-name">老乡农场</div><div class="hb-slogan">设备保养 · 让农机更高效</div></div></div>' +
+      '<div class="hb-tractor">' + DEV_SVG.tractor + '</div>' +
+    '</div>' +
+    '<div class="sheet">' +
+      '<div class="search"><span class="sic">' + ICONS.search + '</span><input id="kw" placeholder="请输入设备名称或设备编号查询" value="' + esc(listState.kw) + '"></div>' +
+      '<div class="filter-row" id="frow"></div>' +
+      '<div class="list-body" id="listBody"></div>' +
+      '<div class="list-count" id="listCount"></div>' +
+    '</div>' +
+    tabbarHtml('设备') +
+  '</div>';
+}
+function renderFrow() {
+  el('frow').innerHTML = FDEFS.map(function (f) {
+    var v = listState[f.key];
+    var on = v !== 'all';
+    var label = on ? fOptLabel(f.key, v) : f.all;
+    return '<button class="fchip' + (on ? ' on' : '') + '" data-f="' + f.key + '"><span class="cv">' + esc(label) + '</span>' + ICONS.down + '</button>';
+  }).join('') + '<button class="freset" id="freset">' + ICONS.funnel + '筛选</button><div class="fdrop" id="fdrop" style="display:none"></div>';
+}
+function bindList() {
+  renderFrow();
+  el('kw').oninput = function () { listState.kw = this.value; refreshCards(); };
+  el('frow').onclick = function (e) {
+    var drop = el('fdrop');
+    var chip = e.target.closest('.fchip');
+    if (chip) {
+      var k = chip.getAttribute('data-f');
+      if (drop.style.display !== 'none' && drop.getAttribute('data-open') === k) { drop.style.display = 'none'; return; }
+      var f = FDEFS.find(function (x) { return x.key === k; });
+      var cur = listState[k];
+      drop.innerHTML = ['all'].concat(f.opts()).map(function (v) {
+        var on = v === cur;
+        return '<div class="opt' + (on ? ' on' : '') + '" data-k="' + k + '" data-v="' + v + '">' + esc(fOptLabel(k, v)) + (on ? '<span class="ck">' + ICONS.check + '</span>' : '') + '</div>';
+      }).join('');
+      drop.setAttribute('data-open', k);
+      drop.style.display = 'block';
+      return;
+    }
+    var opt = e.target.closest('.opt');
+    if (opt) {
+      listState[opt.getAttribute('data-k')] = opt.getAttribute('data-v');
+      renderFrow();
+      refreshCards();
+      return;
+    }
+    if (e.target.closest('#freset')) {
+      listState.kw = ''; listState.type = 'all'; listState.status = 'all'; listState.owner = 'all';
+      el('kw').value = '';
+      renderFrow();
+      refreshCards();
+    }
+  };
+  refreshCards();
+}
+function filteredPlans() {
+  var kw = listState.kw.trim().toLowerCase();
+  return loadPlans().filter(function (p) {
+    if (kw && (p.deviceName + p.deviceCode).toLowerCase().indexOf(kw) < 0) return false;
+    if (listState.status !== 'all' && p.status !== listState.status) return false;
+    if (listState.owner !== 'all' && p.owner !== listState.owner) return false;
+    if (listState.type !== 'all') { var d = deviceOf(p); if (!d || d.type !== listState.type) return false; }
+    return true;
+  });
+}
+function cardHtml(p) {
+  var od = isOverdue(p);
+  var ni = planNextItem(p);
+  var tags = '<span class="tag ' + (p.status === 'done' ? 'tag-done">已完成' : 'tag-undone">未完成') + '</span>' + (od ? '<span class="tag tag-overdue">已逾期</span>' : '');
+  return '<div class="dvcard" data-route="#/plan/detail?id=' + p.id + '">' +
+    '<div class="dc-top">' +
+      '<div class="dc-img">' + deviceSvg(p) + '</div>' +
+      '<div class="dc-main">' +
+        '<div class="dc-line1"><span class="dc-name">' + esc(p.deviceName) + '</span><span class="dc-chip">' + esc(p.deviceCode) + '</span><span class="dc-cnt">共 ' + p.items.length + ' 项</span></div>' +
+        '<div class="dc-row">型号规格：' + esc(p.modelSpec) + '</div>' +
+        '<div class="dc-row">设备用途：' + esc(p.usage) + '</div>' +
+        '<div class="dc-row">负责人：' + esc(p.owner) + '</div>' +
+      '</div>' +
+      '<div class="dc-side"><div class="dc-tags">' + tags + '</div><span class="dc-arrow">›</span></div>' +
+    '</div>' +
+    '<div class="dc-stats">' +
+      '<div class="ds"><span class="ds-ic">' + ICONS.clock + '</span><span class="ds-tx"><span class="ds-lb">保养周期</span><span class="ds-vl">' + esc(cycleShort(ni)) + '</span></span></div>' +
+      '<div class="ds"><span class="ds-ic">' + ICONS.cal + '</span><span class="ds-tx"><span class="ds-lb">上次保养</span><span class="ds-vl">' + esc(p.thisDate) + '</span></span></div>' +
+      '<div class="ds"><span class="ds-ic">' + ICONS.cal + '</span><span class="ds-tx"><span class="ds-lb">下次保养</span><span class="ds-vl' + (od ? ' late' : '') + '">' + esc(planNextDate(p)) + '</span></span></div>' +
+    '</div>' +
+  '</div>';
+}
+function refreshCards() {
+  var plans = filteredPlans();
+  var undone = plans.filter(function (p) { return p.status === 'undone'; }).sort(function (a, b) { return planNextDate(a) < planNextDate(b) ? -1 : 1; });
+  var done = plans.filter(function (p) { return p.status === 'done'; }).sort(function (a, b) { return a.thisDate > b.thisDate ? -1 : 1; });
+  var show = undone.concat(done);
+  el('listBody').innerHTML = show.length ? show.map(cardHtml).join('') :
+    '<div class="empty"><div class="eico">🌱</div>暂无保养计划<br><span style="font-size:12px">点击右上角「新增」录入第一条计划</span></div>';
+  el('listCount').textContent = show.length ? ('共 ' + show.length + ' 条记录') : '';
+  bindRoutes(el('listBody'));
+}
+
+/* ===== 表单 ===== */
+var formState = null, ownerTouched = false;
+function blankItem() { return { content: '', cycleValue: '', cycleUnit: SYS_DICT.maint_cycle_unit[0], nextDate: '' }; }
+function initFormState(id) {
+  if (id) {
+    var p = loadPlans().find(function (x) { return x.id === id; });
+    if (!p) { toast('记录不存在'); location.hash = '#/plan/list'; return null; }
+    formState = JSON.parse(JSON.stringify(p)); ownerTouched = true;
+  } else {
+    formState = { id: null, deviceId: null, deviceName: '', deviceCode: '', modelSpec: '', usage: '', items: [blankItem()], thisDate: '', owner: CURRENT_USER, status: 'undone' };
+    ownerTouched = false;
+  }
+  return formState;
+}
+function viewForm(id) {
+  if (!initFormState(id)) return '<div class="page"></div>';
+  var f = formState;
+  return '<div class="page page-form">' +
+    '<div class="navbar"><button class="back" data-route="#/plan/list">' + ICONS.chev + '</button><span class="tt">' + (id ? '编辑保养计划' : '新增保养计划') + '</span></div>' +
+    '<div class="card"><div class="card-head">设备信息</div><div class="cell-stack">' +
+    '<div class="cell" data-field="deviceName"><span class="cell-label req">设备名称</span><span class="ctl"><input type="text" id="f-name" placeholder="输入名称联动查询" value="' + esc(f.deviceName) + '"></span></div>' +
+    '<div class="cell" data-field="deviceCode"><span class="cell-label req">设备编号</span><span class="ctl"><input type="text" id="f-code" placeholder="输入编号联动查询" value="' + esc(f.deviceCode) + '"></span></div>' +
+    '<div class="dropdown" id="cand" style="display:none"></div>' +
+    '</div>' +
+    '<div class="cell" data-field="modelSpec"><span class="cell-label req">型号规格</span><span class="ctl"><input type="text" id="f-model" placeholder="请输入" value="' + esc(f.modelSpec) + '"></span></div>' +
+    '<div class="cell" data-field="usage"><span class="cell-label req">设备用途</span><span class="ctl"><input type="text" id="f-usage" placeholder="请输入" value="' + esc(f.usage) + '"></span></div>' +
+    '</div>' +
+    '<div class="hint-bar" id="hint" style="display:none"></div>' +
+    '<div class="card"><div class="card-head">保养计划</div>' +
+    '<div class="cell" data-field="thisDate"><span class="cell-label req">本次保养时间</span><span class="ctl"><input type="date" id="f-td" value="' + esc(f.thisDate) + '"></span></div>' +
+    '<div class="items-wrap" id="itemsBox"></div>' +
+    '<button type="button" class="add-item" id="addItem">＋ 添加保养项</button>' +
+    '</div>' +
+    '<div class="card"><div class="card-head">执行信息</div>' +
+    '<div class="cell" data-field="owner"><span class="cell-label req">责任人</span><span class="ctl"><input type="text" id="f-owner" value="' + esc(f.owner) + '"></span></div>' +
+    '<div class="cell" data-field="status"><span class="cell-label req">完成情况</span><span class="ctl"><span class="seg" id="seg"><button type="button" class="seg-item' + (f.status === 'undone' ? ' on' : '') + '" data-v="undone">未完成</button><button type="button" class="seg-item' + (f.status === 'done' ? ' on' : '') + '" data-v="done">已完成</button></span></span></div>' +
+    '</div>' +
+    '<div class="btnbar"><button class="btn-primary" id="save">保存</button></div>' +
+    '</div>';
+}
+function renderItems() {
+  el('itemsBox').innerHTML = formState.items.map(function (it, i) {
+    return '<div class="item-card" data-item="' + i + '">' +
+      '<div class="item-head"><span class="item-no">保养项 ' + (i + 1) + '</span><button type="button" class="item-del" data-del="' + i + '"' + (formState.items.length === 1 ? ' disabled' : '') + '>×</button></div>' +
+      '<div class="item-row"><span class="ilabel">保养内容</span><textarea class="icontent" data-i="' + i + '" data-k="content" placeholder="请输入保养内容">' + esc(it.content) + '</textarea></div>' +
+      '<div class="item-row"><span class="ilabel">保养周期</span><div class="ictl"><input type="number" class="icv" data-i="' + i + '" data-k="cycleValue" min="1" placeholder="数值" value="' + esc(it.cycleValue) + '"><select class="icu" data-i="' + i + '" data-k="cycleUnit">' + SYS_DICT.maint_cycle_unit.map(function (u) { return '<option' + (u === it.cycleUnit ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="item-row"><span class="ilabel">下次保养</span><input type="date" class="idate" data-i="' + i + '" data-k="nextDate" value="' + esc(it.nextDate) + '"></div>' +
+      '</div>';
+  }).join('');
+}
+function showCand(kw) {
+  var dd = el('cand');
+  if (!kw) { dd.style.display = 'none'; return; }
+  var k = kw.toLowerCase();
+  var list = DEVICES.filter(function (d) { return d.name.toLowerCase().indexOf(k) >= 0 || d.code.toLowerCase().indexOf(k) >= 0; }).slice(0, 8);
+  if (!list.length) { dd.innerHTML = '<div class="none">台账未匹配到设备，可手动录入</div>'; dd.style.display = 'block'; return; }
+  dd.innerHTML = list.map(function (d) {
+    return '<div class="cand" data-did="' + d.id + '"><span class="c1">' + esc(d.name) + '</span><span class="c2">' + esc(d.code) + ' · ' + esc(d.model) + ' · ' + esc(d.usage) + '</span></div>';
+  }).join('');
+  dd.style.display = 'block';
+}
+function showHint(code) {
+  var lm = lastMaintDate(code, formState.id);
+  var h = el('hint');
+  h.textContent = lm ? ('上次保养时间：' + lm + '（自动读取该设备最近一条记录）') : '该设备首次保养';
+  h.style.display = 'block';
+}
+function bindForm(id) {
+  if (!formState) return;
+  renderItems();
+  if (id) showHint(formState.deviceCode);
+  el('f-name').oninput = function () { formState.deviceName = this.value; showCand(this.value.trim()); };
+  el('f-code').oninput = function () { formState.deviceCode = this.value; showCand(this.value.trim()); };
+  el('f-model').oninput = function () { formState.modelSpec = this.value; };
+  el('f-usage').oninput = function () { formState.usage = this.value; };
+  el('f-td').onchange = function () { formState.thisDate = this.value; };
+  el('f-owner').oninput = function () { ownerTouched = true; formState.owner = this.value; };
+  el('cand').onclick = function (e) {
+    var c = e.target.closest('.cand'); if (!c) return;
+    var d = DEVICES.find(function (x) { return x.id === c.getAttribute('data-did'); });
+    formState.deviceId = d.id; formState.deviceName = d.name; formState.deviceCode = d.code; formState.modelSpec = d.model; formState.usage = d.usage;
+    if (!ownerTouched) { formState.owner = d.owner; el('f-owner').value = d.owner; }
+    el('f-name').value = d.name; el('f-code').value = d.code; el('f-model').value = d.model; el('f-usage').value = d.usage;
+    el('cand').style.display = 'none';
+    showHint(d.code);
+  };
+  document.onclick = function (e) { var c = el('cand'); if (c && !e.target.closest('.cell-stack')) c.style.display = 'none'; };
+  el('itemsBox').oninput = function (e) { var t = e.target, i = t.getAttribute('data-i'); if (i === null) return; formState.items[+i][t.getAttribute('data-k')] = t.value; };
+  el('itemsBox').onchange = function (e) { var t = e.target, i = t.getAttribute('data-i'); if (i === null) return; formState.items[+i][t.getAttribute('data-k')] = t.value; };
+  el('itemsBox').onclick = function (e) {
+    var b = e.target.closest('.item-del'); if (!b || b.disabled) return;
+    formState.items.splice(+b.getAttribute('data-del'), 1); renderItems();
+  };
+  el('addItem').onclick = function () { formState.items.push(blankItem()); renderItems(); };
+  el('seg').onclick = function (e) {
+    var b = e.target.closest('.seg-item'); if (!b) return;
+    formState.status = b.getAttribute('data-v');
+    el('seg').querySelectorAll('.seg-item').forEach(function (x) { x.classList.toggle('on', x === b); });
+  };
+  el('save').onclick = saveForm;
+}
+function saveForm() {
+  document.querySelectorAll('.err').forEach(function (x) { x.classList.remove('err'); });
+  var errs = [];
+  var f = formState;
+  if (!f.deviceName.trim()) errs.push(['deviceName', '请填写设备名称']);
+  if (!f.deviceCode.trim()) errs.push(['deviceCode', '请填写设备编号']);
+  if (!f.modelSpec.trim()) errs.push(['modelSpec', '请填写型号规格']);
+  if (!f.usage.trim()) errs.push(['usage', '请填写设备用途']);
+  if (!f.thisDate) errs.push(['thisDate', '请选择本次保养时间']);
+  if (!f.items.length) errs.push(['items', '请至少添加一项保养内容']);
+  f.items.forEach(function (it, i) {
+    var n = '第' + (i + 1) + '项';
+    if (!it.content.trim()) errs.push(['item:' + i, '请填写' + n + '保养内容']);
+    else if (!/^[1-9]\d*$/.test(String(it.cycleValue).trim())) errs.push(['item:' + i, n + '保养周期须为≥1的整数']);
+    else if (!it.nextDate) errs.push(['item:' + i, '请选择' + n + '下次保养时间']);
+    else if (f.thisDate && it.nextDate <= f.thisDate) errs.push(['item:' + i, n + '下次保养时间必须晚于本次保养时间']);
+  });
+  if (!f.owner.trim()) errs.push(['owner', '请填写责任人']);
+  if (errs.length) {
+    var k = errs[0][0], w;
+    if (k.indexOf('item:') === 0) w = document.querySelector('.item-card[data-item="' + k.slice(5) + '"]');
+    else w = document.querySelector('[data-field="' + k + '"]');
+    if (w) { w.classList.add('err'); w.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    toast(errs[0][1]);
+    return;
+  }
+  var plans = loadPlans();
+  var now = new Date().toISOString();
+  f.items = f.items.map(function (it) { return { content: it.content.trim(), cycleValue: parseInt(String(it.cycleValue).trim(), 10), cycleUnit: it.cycleUnit, nextDate: it.nextDate }; });
+  if (f.id) {
+    var i = plans.findIndex(function (p) { return p.id === f.id; });
+    f.updatedAt = now; plans[i] = f;
+  } else {
+    f.id = String(Date.now()); f.createdAt = now; f.updatedAt = now; plans.push(f);
+  }
+  savePlans(plans);
+  toast('保存成功');
+  location.hash = '#/plan/list';
+}
+
+/* ===== 详情 ===== */
+function dcell(l, v) { return '<div class="dcell"><span class="dl">' + esc(l) + '</span><span class="dv">' + esc(v) + '</span></div>'; }
+function viewDetail(id) {
+  var p = loadPlans().find(function (x) { return x.id === id; });
+  if (!p) return '<div class="page"><div class="navbar"><span class="tt">保养计划详情</span></div><div class="empty">记录不存在</div></div>';
+  var lm = lastMaintDate(p.deviceCode, p.id);
+  var od = isOverdue(p);
+  var tags = '<span class="tag ' + (p.status === 'done' ? 'tag-done">已完成' : 'tag-undone">未完成') + '</span>' + (od ? '<span class="tag tag-overdue">已逾期</span>' : '');
+  return '<div class="page page-detail">' +
+    '<div class="navbar"><button class="back" data-route="#/plan/list">' + ICONS.chev + '</button><span class="tt">保养计划详情</span></div>' +
+    '<div class="hero"><div class="hero-img">' + deviceSvg(p) + '</div>' +
+    '<div class="hero-info"><div class="hn">' + esc(p.deviceName) + '</div>' +
+    '<div class="hs"><span class="dc-chip">' + esc(p.deviceCode) + '</span>' + esc(p.modelSpec) + '</div>' +
+    '<div class="hs">' + esc(p.usage) + ' · ' + esc(p.owner) + '</div></div>' +
+    '<div class="hero-tags">' + tags + '</div></div>' +
+    '<div class="card"><div class="card-head">设备信息</div>' +
+    dcell('设备名称', p.deviceName) + dcell('设备编号', p.deviceCode) + dcell('型号规格', p.modelSpec) + dcell('设备用途', p.usage) + '</div>' +
+    '<div class="card"><div class="card-head">保养计划</div>' +
+    dcell('本次保养时间', p.thisDate) + dcell('上次保养时间', lm || '—') +
+    '<div class="iv-wrap">' + p.items.map(function (it, i) {
+      var late = p.status === 'undone' && it.nextDate < todayStr();
+      return '<div class="iv-item"><div class="iv-top"><span class="iv-no">' + (i + 1) + '</span><span class="iv-content">' + esc(it.content) + '</span></div>' +
+        '<div class="iv-meta"><span class="iv-chip">' + esc(cycleText(it)) + '</span><span class="iv-next' + (late ? ' late' : '') + '">下次保养 ' + esc(it.nextDate) + '</span></div></div>';
+    }).join('') + '</div></div>' +
+    '<div class="card"><div class="card-head">执行信息</div>' +
+    dcell('责任人', p.owner) + dcell('完成情况', p.status === 'done' ? '已完成' : '未完成') + '</div>' +
+    '<div class="btnbar">' + (p.status === 'undone' ? '<button class="btn-ghost" id="done">标记完成</button>' : '') + '<button class="btn-primary" id="edit">编辑</button></div>' +
+    '</div>';
+}
+function bindDetail(id) {
+  var d = el('done');
+  if (d) d.onclick = function () {
+    if (!confirm('确认将该保养计划标记为已完成？')) return;
+    var plans = loadPlans();
+    var p = plans.find(function (x) { return x.id === id; });
+    p.status = 'done'; p.updatedAt = new Date().toISOString();
+    savePlans(plans); toast('已标记完成'); render();
+  };
+  var e = el('edit');
+  if (e) e.onclick = function () { location.hash = '#/plan/form?id=' + id; };
+}
+
+loadPlans();
+render();
+</script>
+</body>
+</html>
