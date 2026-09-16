@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import 'vant/lib/index.css'
 import './styles/tokens.css'
@@ -9,7 +10,9 @@ async function bootstrap() {
     const { startMockWorker } = await import('./mock/browser')
     await startMockWorker()
   }
-  createApp(App).mount('#app')
+  const app = createApp(App)
+  app.use(createPinia())
+  app.mount('#app')
 }
 
 bootstrap()
