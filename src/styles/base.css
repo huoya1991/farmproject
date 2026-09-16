@@ -9,3 +9,22 @@ a{color:inherit;text-decoration:none}
 .hills-scene svg{width:100%;height:100%;display:block}
 .devsvg{display:block}
 .devsvg svg{width:100%;height:100%;display:block}
+
+/* Vant 4 主题定制：Resolver 引入的是预编译 CSS，less 变量不生效，须用 CSS 变量覆盖。
+   选择器用 :root:root 而非 :root——vant 的 :root 变量块随路由 chunk CSS 后注入，
+   同特异性 :root 会输掉，而 :root:root 特异性更高，与加载顺序无关；
+   也不能用 body——vant 的派生变量（如 --van-radio-checked-icon-color）以
+   var(--van-primary-color) 间接引用定义在 :root，var() 在定义处（:root）解析。 */
+:root:root{
+  --van-primary-color:#1FA14A;
+  --van-button-primary-background:linear-gradient(135deg,#1FA14A,#0F5E2C);
+  --van-button-primary-border-color:transparent;
+  --van-tabbar-item-active-color:#1FA14A;
+  --van-nav-bar-background:#FFFFFF;
+  --van-nav-bar-title-text-color:#1E2B22;
+  --van-tab-active-text-color:#1FA14A;
+  --van-tabs-bottom-bar-color:#1FA14A;
+  --van-cell-value-color:#1E2B22;
+  --van-field-label-width:96px;
+  --van-cell-vertical-padding:13px;
+}
