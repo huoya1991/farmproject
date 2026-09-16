@@ -11,6 +11,6 @@ const DEV_SVG: Record<string, string> = {
   drone: '<svg viewBox="0 0 64 64"><path d="M32 30L16 16M32 30l16-14M32 30L16 48M32 30l16 18" stroke="#7A828C" stroke-width="3" stroke-linecap="round"/><ellipse cx="14" cy="14" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="50" cy="14" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="14" cy="50" rx="9" ry="3" fill="#2B2B2B"/><ellipse cx="50" cy="50" rx="9" ry="3" fill="#2B2B2B"/><rect x="24" y="24" width="16" height="11" rx="4" fill="#E85A4F"/><circle cx="32" cy="29" r="2" fill="#BFE8F5"/><rect x="27" y="35" width="10" height="9" rx="2" fill="#F5F2EA"/><path d="M22 44h20" stroke="#8A929C" stroke-width="2" stroke-linecap="round"/></svg>',
   generic: '<svg viewBox="0 0 64 64"><rect x="14" y="22" width="30" height="16" rx="4" fill="#8FB89B"/><rect x="40" y="26" width="10" height="8" rx="2" fill="#7BA888"/><circle cx="20" cy="44" r="9" fill="#2B2B2B"/><circle cx="20" cy="44" r="4" fill="#C9CDD2"/><circle cx="46" cy="46" r="6" fill="#2B2B2B"/><circle cx="46" cy="46" r="3" fill="#C9CDD2"/></svg>'
 }
-const props = defineProps<{ kind?: string }>()
+const props = defineProps<{ kind?: string | undefined }>()
 const svg = computed(() => DEV_SVG[props.kind ?? ''] ?? DEV_SVG.generic)
 </script>
