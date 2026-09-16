@@ -11,6 +11,7 @@ declare module 'vue' {
     DeviceSvg: typeof import('./src/components/DeviceSvg.vue')['default']
     EmptyState: typeof import('./src/components/EmptyState.vue')['default']
     HillsScene: typeof import('./src/components/HillsScene.vue')['default']
+    HomeSection: typeof import('./src/components/HomeSection.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Tabbar: typeof import('./src/components/Tabbar.vue')['default']
