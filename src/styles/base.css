@@ -1,0 +1,11 @@
+*,*::before,*::after{box-sizing:border-box}
+html,body,#app{margin:0;padding:0;background:var(--color-bg);color:var(--color-text);font:14px/1.5 var(--font-body);-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+a{color:inherit;text-decoration:none}
+.page{max-width:375px;margin:0 auto;min-height:100vh;padding-bottom:60px}
+
+/* 田园插画资产（v-html 注入的 svg 不受 scoped 样式影响，须全局规则） */
+.hills-scene{position:absolute;left:0;right:0;bottom:-2px;width:100%;pointer-events:none}
+.hills-scene svg{width:100%;height:100%;display:block}
+.devsvg{display:block}
+.devsvg svg{width:100%;height:100%;display:block}

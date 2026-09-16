@@ -1,0 +1,19 @@
+:root{
+  --color-primary:#1FA14A;
+  --color-primary-dark:#157A38;
+  --color-primary-xdark:#0F5E2C;
+  --color-bg:#F2F7F3;
+  --color-card:#FFFFFF;
+  --color-text:#1E2B22;
+  --color-text-2:#5C6B60;
+  --color-text-3:#93A297;
+  --color-line:#E9F0EA;
+  --color-chip-bg:#E3F3E8;  --color-chip-fg:#1FA14A;
+  --color-done-bg:#E3F3E8;   --color-done-fg:#1FA14A;
+  --color-undone-bg:#FDECEA; --color-undone-fg:#E64A40;
+  --color-overdue-bg:#D93025;--color-overdue-fg:#FFFFFF;
+  --radius-card:14px;
+  --radius-chip:6px;
+  --shadow-card:0 4px 14px rgba(30,80,50,.07);
+  --font-body:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+}

@@ -7,7 +7,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Chip: typeof import('./src/components/Chip.vue')['default']
+    DeviceSvg: typeof import('./src/components/DeviceSvg.vue')['default']
+    EmptyState: typeof import('./src/components/EmptyState.vue')['default']
+    HillsScene: typeof import('./src/components/HillsScene.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Tabbar: typeof import('./src/components/Tabbar.vue')['default']
+    Tag: typeof import('./src/components/Tag.vue')['default']
+    TopBar: typeof import('./src/components/TopBar.vue')['default']
   }
 }
