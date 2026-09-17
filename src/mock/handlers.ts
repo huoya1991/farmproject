@@ -3,6 +3,9 @@ import type { Plan, PlanWithDerived } from '@/types/maintPlan'
 import { storage } from './storage'
 import { DEVICES } from './devices'
 import { planNextDate, isOverdue, deriveLastDate } from '@/utils/date'
+import type { InspectRecord, InspectRecordDerived } from '@/types/inspection'
+import { inspectStorage } from './inspectStorage'
+import { deriveInspectStatus } from '@/utils/validateInspect'
 
 function withDerived(plan: Plan, all: Plan[]): PlanWithDerived {
   const dev = DEVICES.find(d => d.id === plan.deviceId) ?? DEVICES.find(d => d.code === plan.deviceCode)
@@ -17,12 +20,18 @@ function withDerived(plan: Plan, all: Plan[]): PlanWithDerived {
 
 function newId(prefix: string) { return prefix + '_' + Math.random().toString(36).slice(2, 9) }
 
+function withInspectDerived(rec: InspectRecord): InspectRecordDerived {
+  const dev = DEVICES.find(d => d.code === rec.deviceCode)
+  return { ...rec, status: deriveInspectStatus(rec), ...(dev ? { deviceSvg: dev.svg } : {}) }
+}
+
 export const handlers = [
   http.post('/api/auth/exchange', async () =>
     HttpResponse.json({ token: 'mock-token', user: { name: '王强', role: 'device_owner' } })),
 
   http.get('/api/dict/:type', ({ params }) => {
     if (params.type === 'maint_cycle_unit') return HttpResponse.json(['小时','天','公里'])
+    if (params.type === 'usage_duration_unit') return HttpResponse.json(['小时','天','公里'])
     return HttpResponse.json([], { status: 404 })
   }),
 
@@ -81,5 +90,29 @@ export const handlers = [
     all[idx] = { ...all[idx]!, status: body.status, updatedAt: Date.now() }
     storage.write(all)
     return HttpResponse.json(withDerived(all[idx]!, all))
+  })
+  ,
+
+  http.get('/api/inspect-records', () =>
+    HttpResponse.json(inspectStorage.read().map(withInspectDerived))),
+
+  http.get('/api/inspect-records/:id', ({ params }) => {
+    const rec = inspectStorage.read().find(r => r.id === params.id)
+    if (!rec) return HttpResponse.json({ message: 'not found' }, { status: 404 })
+    return HttpResponse.json(withInspectDerived(rec))
+  }),
+
+  http.post('/api/inspect-records', async ({ request }) => {
+    const body = await request.json() as Omit<InspectRecord, 'id' | 'createdAt'>
+    const rec: InspectRecord = { ...body, id: newId('ir'), createdAt: Date.now() }
+    const all = [rec, ...inspectStorage.read()]
+    try {
+      inspectStorage.write(all)
+    } catch {
+      // localStorage 超限（照片体积）：降级为无照片保存，响应体现实际落库内容
+      delete rec.photos
+      inspectStorage.write(all)
+    }
+    return HttpResponse.json(withInspectDerived(rec), { status: 201 })
   })
 ]
