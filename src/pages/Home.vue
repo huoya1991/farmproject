@@ -73,7 +73,7 @@ const sections: { title: string; items: HomeIcon[] }[] = [
     { label:'农资退货', glyph:'退', color:'g-orange' }, { label:'农场农资', glyph:'场', color:'g-purple' } ] },
   { title:'设备保养', items:[
     { label:'保养计划', glyph:'保', color:'g-orange', route:'/plan/list' },
-    { label:'点检记录', glyph:'点', color:'g-green', toast:'功能建设中' },
+    { label:'点检记录', glyph:'点', color:'g-green', route:'/inspect/list' },
     { label:'维修记录', glyph:'修', color:'g-blue', toast:'功能建设中' },
     { label:'设备配件', glyph:'配', color:'g-purple', toast:'功能建设中' } ] },
   { title:'任务管理', items:[

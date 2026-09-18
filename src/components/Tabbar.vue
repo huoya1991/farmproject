@@ -17,7 +17,7 @@ const router = useRouter()
 const tabs = [
   { key:'home',    label:'首页', icon:ICONS.home,      route:'/home' },
   { key:'device',  label:'设备', icon:ICONS.tractorTab, route:'/plan/list' },
-  { key:'inspect', label:'点检', icon:ICONS.clipboard },
+  { key:'inspect', label:'点检', icon:ICONS.clipboard, route:'/inspect/list' },
   { key:'repair',  label:'维修', icon:ICONS.wrench },
   { key:'me',      label:'我的', icon:ICONS.user }
 ] as const
