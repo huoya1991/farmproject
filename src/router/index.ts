@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/plan/detail', component: () => import('@/pages/PlanDetail.vue') },
   { path: '/inspect/list', component: () => import('@/pages/InspectList.vue') },
   { path: '/inspect/form', component: () => import('@/pages/InspectForm.vue') },
+  { path: '/inspect/detail', component: () => import('@/pages/InspectDetail.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/home' }
 ]
 
