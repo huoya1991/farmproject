@@ -600,7 +600,7 @@ describe('inspection store', () => {
   })
 
   it('monthStats counts current month and ignores filters', async () => {
-    const month = todayStr().slice(0, 7)
+    const month = todayStr().slice(0, 7);
     (api.listInspectRecords as any).mockResolvedValue([
       mk('a', { date: `${month}-02`, status: '正常' }),
       mk('b', { date: `${month}-05`, status: '异常' }),
