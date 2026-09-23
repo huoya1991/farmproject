@@ -54,6 +54,39 @@ describe('inspection store', () => {
     expect(s.filteredSortedList.map(r => r.id).sort()).toEqual(['b', 'c'])
   })
 
+  it('clears the previous record immediately while fetching another record', async () => {
+    const s = useInspectionStore()
+    s.current = mk('old', {})
+    let resolve!: (value: InspectRecordDerived) => void
+    vi.mocked(api.getInspectRecord).mockReturnValue(new Promise(done => { resolve = done }))
+    const request = s.fetchOne('new')
+    expect(s.current).toBeNull()
+    expect(s.loading).toBe(true)
+    resolve(mk('new', {}))
+    await request
+    expect(s.current?.id).toBe('new')
+    expect(s.loading).toBe(false)
+  })
+
+  it('ignores stale responses without ending the latest loading state', async () => {
+    const s = useInspectionStore()
+    let resolveOld!: (value: InspectRecordDerived) => void
+    let resolveNew!: (value: InspectRecordDerived) => void
+    vi.mocked(api.getInspectRecord)
+      .mockReturnValueOnce(new Promise(done => { resolveOld = done }))
+      .mockReturnValueOnce(new Promise(done => { resolveNew = done }))
+    const oldRequest = s.fetchOne('old')
+    const newRequest = s.fetchOne('new')
+    resolveOld(mk('old', {}))
+    await oldRequest
+    expect(s.current).toBeNull()
+    expect(s.loading).toBe(true)
+    resolveNew(mk('new', {}))
+    await newRequest
+    expect(s.current?.id).toBe('new')
+    expect(s.loading).toBe(false)
+  })
+
   it('monthStats counts current month and ignores filters', async () => {
     const month = todayStr().slice(0, 7);
     (api.listInspectRecords as any).mockResolvedValue([

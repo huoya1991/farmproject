@@ -40,7 +40,9 @@
       </van-cell-group>
       <div class="photos">
         <div class="photos__label">现场照片<span class="photos__tip">（最多 3 张）</span></div>
-        <van-uploader v-model="fileList" accept="image/*" :max-count="3" :after-read="afterRead" />
+        <van-uploader v-model="fileList" accept="image/*" result-type="file" :max-count="3"
+          :before-read="beforeRead" :after-read="afterRead" :disabled="submitting || saved"
+          :deletable="!submitting && !saved" :before-delete="() => !submitting && !saved" />
       </div>
     </div>
 
@@ -65,7 +67,7 @@
 
     <div class="form__bar">
       <button class="btn-ghost" @click="$router.push('/inspect/list')">取消</button>
-      <van-button type="primary" class="btn-save" :loading="submitting" @click="submit">保存记录</van-button>
+      <van-button type="primary" class="btn-save" :loading="submitting" :disabled="saved" @click="submit">保存记录</van-button>
     </div>
 
     <van-popup v-model:show="showDevice" position="bottom" round>
@@ -84,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, nextTick } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, type UploaderFileListItem } from 'vant'
 import TopBar from '@/components/TopBar.vue'
@@ -93,6 +95,7 @@ import { useInspectionStore } from '@/stores/inspection'
 import { useDictStore } from '@/stores/dict'
 import { useAuthStore } from '@/stores/auth'
 import { searchDevices } from '@/api/device'
+import { ApiError, NetworkError } from '@/api/client'
 import { validateInspect, deriveInspectStatus } from '@/utils/validateInspect'
 import { todayStr } from '@/utils/date'
 import type { CheckResult, InspectPayload } from '@/types/inspection'
@@ -108,6 +111,8 @@ const auth = useAuthStore()
 const devices = ref<Device[]>([])
 const fileList = ref<UploaderFileListItem[]>([])
 const submitting = ref(false)
+const saved = ref(false)
+const pendingReads = ref(0)
 const showDevice = ref(false)
 const showStatus = ref(false)
 const showOperator = ref(false)
@@ -177,39 +182,56 @@ function compressImage(file: File): Promise<string> {
     const url = URL.createObjectURL(file)
     const img = new Image()
     img.onload = () => {
-      const MAX = 1280
-      const scale = Math.min(1, MAX / Math.max(img.width, img.height))
-      const w = Math.max(1, Math.round(img.width * scale))
-      const h = Math.max(1, Math.round(img.height * scale))
-      const canvas = document.createElement('canvas')
-      canvas.width = w; canvas.height = h
-      const ctx = canvas.getContext('2d')
-      URL.revokeObjectURL(url)
-      if (!ctx) { reject(new Error('no canvas ctx')); return }
-      ctx.drawImage(img, 0, 0, w, h)
-      resolve(canvas.toDataURL('image/jpeg', 0.8))
+      try {
+        const MAX = 1280
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+        const w = Math.max(1, Math.round(img.width * scale))
+        const h = Math.max(1, Math.round(img.height * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) throw new Error('no canvas ctx')
+        ctx.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      } catch (error) {
+        reject(error)
+      } finally { URL.revokeObjectURL(url) }
     }
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')) }
     img.src = url
   })
 }
 
+function beforeRead() {
+  if (submitting.value || saved.value) return false
+  pendingReads.value++
+  return true
+}
+
 async function afterRead(item: UploaderFileListItem | UploaderFileListItem[]) {
   const arr = Array.isArray(item) ? item : [item]
-  for (const it of arr) {
-    if (!it.file) continue
-    try {
-      it.url = await compressImage(it.file)
-      it.status = 'done'
-    } catch {
-      fileList.value = fileList.value.filter(f => f !== it)
-      showToast('照片处理失败，请重试')
+  arr.forEach(it => { it.status = 'uploading' })
+  try {
+    for (const it of arr) {
+      try {
+        if (!it.file) throw new Error('missing file')
+        it.url = await compressImage(it.file)
+        it.status = 'done'
+      } catch {
+        fileList.value = fileList.value.filter(f => f !== it)
+        showToast('照片处理失败，请重试')
+      }
     }
-  }
+  } finally { pendingReads.value-- }
 }
 
 async function submit() {
-  const photos = fileList.value.map(f => f.url).filter((u): u is string => !!u)
+  if (submitting.value || saved.value) return
+  if (pendingReads.value || fileList.value.some(f => f.status === 'uploading' || !f.url)) {
+    showToast('照片处理中，请稍候再保存')
+    return
+  }
+  const photos = fileList.value.map(f => f.url!)
   const payload: InspectPayload = {
     date: draft.date,
     deviceCode: draft.deviceCode,
@@ -228,12 +250,31 @@ async function submit() {
   if (!res.ok) { showToast(res.errors[0]!.message); return }
   submitting.value = true
   try {
-    const created = await store.create(payload)
-    if (photos.length && !(created.photos?.length)) showToast('照片过大，已忽略照片')
-    await store.fetchList()
-    showToast('保存成功')
-    await nextTick()
-    router.push('/inspect/list')
+    let created
+    try {
+      created = await store.create(payload)
+    } catch (error) {
+      showToast((error instanceof ApiError || error instanceof NetworkError) && /[\u4e00-\u9fff]/.test(error.message)
+        ? error.message : '保存失败，请稍后重试')
+      return
+    }
+    saved.value = true
+    const remaining = [...(created.photos ?? [])]
+    const omitted = photos.flatMap((photo, index) => {
+      const match = remaining.indexOf(photo)
+      if (match < 0) return [index + 1]
+      remaining.splice(match, 1)
+      return []
+    })
+    let message = '保存成功'
+    if (omitted.length) message += `；照片过大，已忽略第${omitted.join('、')}张照片`
+    try {
+      await store.fetchList()
+    } catch {
+      message += '；列表刷新失败，请刷新查看'
+    }
+    showToast(message)
+    await router.push('/inspect/list')
   } finally { submitting.value = false }
 }
 </script>

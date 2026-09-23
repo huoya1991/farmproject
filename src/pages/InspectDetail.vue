@@ -1,7 +1,10 @@
 <template>
-  <div v-if="r" class="page page-detail">
+  <div class="page page-detail">
     <TopBar title="点检详情" back @back="$router.push('/inspect/list')" />
 
+    <div v-if="store.loading" class="dcell" role="status">加载中…</div>
+    <div v-else-if="store.detailError" class="dcell" role="alert">{{ store.detailError }}</div>
+    <template v-else-if="r">
     <div class="hero">
       <div class="hero-img"><DeviceSvg :kind="r.deviceSvg" /></div>
       <div class="hero-info">
@@ -35,11 +38,12 @@
         <img v-for="(p, i) in r.photos" :key="i" :src="p" class="pgrid__img" alt="现场照片" @click="preview(i)" />
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { showImagePreview } from 'vant'
 import TopBar from '@/components/TopBar.vue'
@@ -58,10 +62,7 @@ function preview(i: number) {
   showImagePreview({ images: r.value?.photos ?? [], startPosition: i, closeable: true })
 }
 
-onMounted(async () => {
-  const id = route.query.id as string
-  if (id) await store.fetchOne(id)
-})
+watch(() => route.query.id, id => { void store.fetchOne(id) }, { immediate: true, flush: 'sync' })
 </script>
 
 <style scoped>

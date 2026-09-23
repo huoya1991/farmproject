@@ -106,12 +106,32 @@ export const handlers = [
     const body = await request.json() as Omit<InspectRecord, 'id' | 'createdAt'>
     const rec: InspectRecord = { ...body, id: newId('ir'), createdAt: Date.now() }
     const all = [rec, ...inspectStorage.read()]
+    const isQuota = (error: unknown) => error instanceof DOMException && error.name === 'QuotaExceededError'
     try {
-      inspectStorage.write(all)
-    } catch {
-      // localStorage 超限（照片体积）：降级为无照片保存，响应体现实际落库内容
-      delete rec.photos
-      inspectStorage.write(all)
+      try {
+        inspectStorage.write(all)
+      } catch (error) {
+        if (!isQuota(error)) throw error
+        const photos = rec.photos ?? []
+        delete rec.photos
+        inspectStorage.write(all)
+        for (const photo of photos) {
+          const saved: string[] | undefined = rec.photos
+          rec.photos = [...(saved ?? []), photo]
+          try {
+            inspectStorage.write(all)
+          } catch (error) {
+            if (saved) rec.photos = saved
+            else delete rec.photos
+            if (!isQuota(error)) throw error
+          }
+        }
+      }
+    } catch (error) {
+      const message = isQuota(error)
+        ? '存储空间不足，保存失败，请清理空间后重试'
+        : '保存失败，请稍后重试'
+      return HttpResponse.json({ message }, { status: 500 })
     }
     return HttpResponse.json(withInspectDerived(rec), { status: 201 })
   })

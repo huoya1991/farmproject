@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>可视化流程引擎 - 管理后台</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #app { height: 100%; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .layout { display: flex; height: 100vh; }
+    .sidebar {
+      width: 220px; background: #1d1e2c; color: #a0a3bd;
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sidebar-logo {
+      height: 60px; display: flex; align-items: center; padding: 0 20px;
+      font-size: 18px; font-weight: 700; color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .sidebar-logo span { margin-left: 10px; }
+    .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .sidebar-nav a {
+      display: flex; align-items: center; padding: 13px 24px;
+      color: #a0a3bd; text-decoration: none; font-size: 14px;
+      transition: all .2s; cursor: pointer; gap: 10px;
+    }
+    .sidebar-nav a:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .sidebar-nav a.active {
+      color: #fff; background: linear-gradient(90deg, #409eff 0%, transparent 100%);
+      border-left: 3px solid #409eff; padding-left: 21px;
+    }
+    .sidebar-nav a .icon { font-size: 18px; width: 20px; text-align: center; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .header {
+      height: 60px; background: #fff; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06); z-index: 10;
+    }
+    .header-title { font-size: 16px; font-weight: 600; color: #303133; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-badge { position: relative; cursor: pointer; font-size: 20px; color: #606266; }
+    .header-badge .dot {
+      position: absolute; top: -2px; right: -4px;
+      width: 8px; height: 8px; background: #f56c6c; border-radius: 50%;
+    }
+    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    .content-fullscreen { flex: 1; overflow: hidden; padding: 0; }
+
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .stat-card {
+      background: #fff; border-radius: 8px; padding: 20px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .stat-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff;
+    }
+    .stat-icon.blue { background: linear-gradient(135deg, #409eff, #66b1ff); }
+    .stat-icon.orange { background: linear-gradient(135deg, #e6a23c, #f0c78a); }
+    .stat-icon.green { background: linear-gradient(135deg, #67c23a, #95d475); }
+    .stat-icon.red { background: linear-gradient(135deg, #f56c6c, #f89898); }
+    .stat-info .stat-value { font-size: 28px; font-weight: 700; color: #303133; }
+    .stat-info .stat-label { font-size: 13px; color: #909399; margin-top: 4px; }
+    .stat-info .stat-trend { font-size: 12px; margin-top: 4px; }
+    .stat-info .stat-trend.up { color: #67c23a; }
+    .stat-info .stat-trend.down { color: #f56c6c; }
+
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .chart-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .chart-card h3 { font-size: 15px; color: #303133; margin-bottom: 16px; }
+    .page-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .page-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .page-card-header h3 { font-size: 15px; color: #303133; }
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+
+    /* ===== Flow Designer ===== */
+    .designer-layout { display: flex; height: 100%; }
+    .designer-palette {
+      width: 200px; background: #fff; border-right: 1px solid #e4e7ed;
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .palette-header { padding: 14px 16px; font-size: 14px; font-weight: 600; color: #303133; border-bottom: 1px solid #ebeef5; }
+    .palette-list { flex: 1; padding: 12px; overflow-y: auto; }
+    .palette-group { margin-bottom: 16px; }
+    .palette-group-title { font-size: 12px; color: #909399; margin-bottom: 8px; padding: 0 4px; }
+    .palette-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 6px; cursor: grab; margin-bottom: 4px;
+      border: 1px solid #ebeef5; transition: all .15s; font-size: 13px; color: #303133;
+    }
+    .palette-item:hover { border-color: #409eff; background: #ecf5ff; }
+    .palette-item:active { cursor: grabbing; }
+    .palette-item .node-dot {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; flex-shrink: 0;
+    }
+    .palette-item .node-dot.start { background: #67c23a; }
+    .palette-item .node-dot.end { background: #f56c6c; }
+    .palette-item .node-dot.approval { background: #409eff; }
+    .palette-item .node-dot.service { background: #e6a23c; }
+    .palette-item .node-dot.gateway { background: #9b59b6; }
+    .palette-item .node-dot.subprocess { background: #1abc9c; }
+    .palette-item .node-dot.notification { background: #7c4dff; }
+
+    .designer-canvas-wrap { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .designer-toolbar {
+      height: 44px; background: #fff; border-bottom: 1px solid #e4e7ed;
+      display: flex; align-items: center; padding: 0 12px; gap: 4px; flex-shrink: 0;
+    }
+    .designer-toolbar .tb-btn {
+      padding: 6px 10px; border: none; background: none; cursor: pointer;
+      border-radius: 4px; font-size: 13px; color: #606266; display: flex; align-items: center; gap: 4px;
+    }
+    .designer-toolbar .tb-btn:hover { background: #f0f2f5; }
+    .designer-toolbar .tb-btn.primary { background: #409eff; color: #fff; }
+    .designer-toolbar .tb-btn.primary:hover { background: #66b1ff; }
+    .designer-toolbar .tb-sep { width: 1px; height: 20px; background: #e4e7ed; margin: 0 4px; }
+    .designer-toolbar .tb-zoom { font-size: 13px; color: #606266; min-width: 48px; text-align: center; }
+    .designer-toolbar .tb-right { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+
+    .canvas-container {
+      flex: 1; position: relative; overflow: hidden; background: #f8f9fa;
+      background-image: radial-gradient(circle, #d4d8dd 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .canvas-inner { position: absolute; top: 0; left: 0; width: 3000px; height: 2000px; transform-origin: 0 0; }
+    .canvas-node {
+      position: absolute; min-width: 120px; padding: 10px 16px;
+      border-radius: 8px; font-size: 13px; text-align: center;
+      cursor: move; user-select: none; z-index: 2;
+      border: 2px solid transparent; transition: box-shadow .15s;
+    }
+    .canvas-node:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .canvas-node.selected { border-color: #409eff; box-shadow: 0 0 0 3px rgba(64,158,255,.2); }
+    .canvas-node.start { background: #e1f3d8; color: #67c23a; border-color: #b3e19d; }
+    .canvas-node.start.selected { border-color: #67c23a; }
+    .canvas-node.end { background: #fde2e2; color: #f56c6c; border-color: #fab6b6; }
+    .canvas-node.end.selected { border-color: #f56c6c; }
+    .canvas-node.approval { background: #d9ecff; color: #409eff; border-color: #a0cfff; }
+    .canvas-node.approval.selected { border-color: #409eff; }
+    .canvas-node.service { background: #faecd8; color: #e6a23c; border-color: #f3d19e; }
+    .canvas-node.service.selected { border-color: #e6a23c; }
+    .canvas-node.gateway { background: #f0e6f6; color: #9b59b6; border-color: #d5c4e0; }
+    .canvas-node.gateway.selected { border-color: #9b59b6; }
+    .canvas-node.subprocess { background: #d1f2eb; color: #1abc9c; border-color: #a3e4d7; }
+    .canvas-node.subprocess.selected { border-color: #1abc9c; }
+    .canvas-node.notification { background: #ede7f6; color: #7c4dff; border-color: #c5b3e9; }
+    .canvas-node.notification.selected { border-color: #7c4dff; }
+    .canvas-node .node-type-label { font-size: 11px; opacity: .7; margin-bottom: 2px; }
+    .canvas-node .node-name { font-weight: 600; font-size: 13px; }
+    .canvas-node .port {
+      position: absolute; width: 10px; height: 10px; border-radius: 50%;
+      background: #c0c4cc; border: 2px solid #fff; z-index: 3; cursor: crosshair;
+      transition: background .15s, transform .15s;
+    }
+    .canvas-node .port:hover { background: #409eff; transform: scale(1.3); }
+    .canvas-node .port.top { top: -6px; left: 50%; margin-left: -5px; }
+    .canvas-node .port.bottom { bottom: -6px; left: 50%; margin-left: -5px; }
+    .canvas-node .port.left { left: -6px; top: 50%; margin-top: -5px; }
+    .canvas-node .port.right { right: -6px; top: 50%; margin-top: -5px; }
+    .canvas-node .delete-btn {
+      position: absolute; top: -10px; right: -10px; width: 20px; height: 20px;
+      background: #f56c6c; color: #fff; border: none; border-radius: 50%;
+      font-size: 12px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 20px;
+    }
+    .canvas-node:hover .delete-btn { display: flex; }
+
+    .svg-connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .svg-connections path { pointer-events: stroke; cursor: pointer; }
+    .svg-connections .connline { fill: none; stroke: #c0c4cc; stroke-width: 2; }
+    .svg-connections .connline:hover { stroke: #409eff; stroke-width: 3; }
+    .svg-connections .connline.selected { stroke: #409eff; stroke-width: 3; }
+    .svg-connections .conn-arrow { fill: #c0c4cc; }
+    .svg-connections .conn-label { font-size: 11px; fill: #909399; text-anchor: middle; pointer-events: none; }
+
+    .designer-props {
+      width: 320px; background: #fff; border-left: 1px solid #e4e7ed;
+      display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+    }
+    .props-header {
+      padding: 14px 16px; font-size: 14px; font-weight: 600; color: #303133;
+      border-bottom: 1px solid #ebeef5; display: flex; justify-content: space-between; align-items: center;
+    }
+    .props-body { flex: 1; padding: 16px; overflow-y: auto; }
+    .props-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #c0c4cc; font-size: 14px; }
+
+    .minimap {
+      position: absolute; bottom: 16px; right: 16px; width: 180px; height: 120px;
+      background: rgba(255,255,255,.92); border: 1px solid #e4e7ed; border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08); z-index: 10; overflow: hidden;
+    }
+    .minimap-viewport { position: absolute; border: 2px solid #409eff; background: rgba(64,158,255,.08); border-radius: 2px; }
+    .minimap-node { position: absolute; border-radius: 2px; opacity: .7; }
+
+    .el-table { font-size: 13px; }
+    .el-tag { border-radius: 4px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .info-grid .info-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 8px; }
+    .info-grid .info-label { color: #909399; font-size: 13px; min-width: 80px; }
+    .info-grid .info-value { color: #303133; font-size: 13px; }
+
+    .css-bar-chart { display: flex; align-items: flex-end; justify-content: space-around; height: 180px; padding: 0 10px; border-bottom: 1px solid #ebeef5; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .bar-pair { display: flex; gap: 3px; align-items: flex-end; height: 160px; }
+    .bar { width: 16px; border-radius: 3px 3px 0 0; transition: height .3s; min-height: 4px; }
+    .bar.blue { background: linear-gradient(180deg, #409eff, #a0cfff); }
+    .bar.green { background: linear-gradient(180deg, #67c23a, #b3e19d); }
+    .bar-label { font-size: 11px; color: #909399; margin-top: 6px; }
+
+    .css-donut-wrapper { display: flex; align-items: center; gap: 24px; padding: 10px 0; }
+    .css-donut { width: 160px; height: 160px; flex-shrink: 0; }
+    .css-donut svg { width: 100%; height: 100%; }
+    .donut-legend { flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name { flex: 1; color: #606266; }
+    .legend-value { color: #303133; font-weight: 600; }
+
+    .task-card { border: 1px solid #ebeef5; border-radius: 8px; padding: 16px 20px; margin-bottom: 12px; transition: box-shadow .2s; }
+    .task-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .task-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .task-card-title { font-size: 15px; font-weight: 600; color: #303133; }
+    .task-card-body { display: flex; gap: 24px; margin-top: 10px; font-size: 13px; color: #909399; }
+    .task-card-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+    .log-type { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+    .log-type.create { background: #d9ecff; color: #409eff; }
+    .log-type.approve { background: #e1f3d8; color: #67c23a; }
+    .log-type.reject { background: #fde2e2; color: #f56c6c; }
+    .log-type.system { background: #f0f2f5; color: #909399; }
+    .log-type.delegate { background: #faecd8; color: #e6a23c; }
+
+    .api-card { border: 1px solid #ebeef5; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    .api-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .api-card-title { font-size: 15px; font-weight: 600; color: #303133; }
+    .api-key-box {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      background: #f5f7fa; border-radius: 4px; font-family: monospace; font-size: 13px; color: #606266;
+    }
+    .api-method { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; min-width: 50px; text-align: center; }
+    .api-method.get { background: #e1f3d8; color: #67c23a; }
+    .api-method.post { background: #d9ecff; color: #409eff; }
+    .api-method.put { background: #faecd8; color: #e6a23c; }
+    .api-method.delete { background: #fde2e2; color: #f56c6c; }
+
+    .version-timeline { padding: 0 4px; }
+    .vt-item { display: flex; gap: 12px; padding-bottom: 20px; position: relative; }
+    .vt-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; position: relative; z-index: 1; }
+    .vt-dot.current { background: #67c23a; }
+    .vt-dot.old { background: #dcdfe6; }
+    .vt-line { position: absolute; left: 5px; top: 16px; bottom: 0; width: 2px; background: #e4e7ed; }
+    .vt-item:last-child .vt-line { display: none; }
+    .vt-content { flex: 1; }
+    .vt-title { font-size: 14px; color: #303133; font-weight: 500; }
+    .vt-meta { font-size: 12px; color: #909399; margin-top: 4px; }
+    .vt-desc { font-size: 13px; color: #606266; margin-top: 6px; }
+
+    .template-preview {
+      background: #fafafa; border-radius: 8px; padding: 24px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap; min-height: 200px;
+    }
+    .preview-node { padding: 10px 18px; border-radius: 6px; font-size: 13px; text-align: center; min-width: 90px; }
+    .preview-node.start { background: #e1f3d8; color: #67c23a; border: 1px solid #b3e19d; }
+    .preview-node.end { background: #fde2e2; color: #f56c6c; border: 1px solid #fab6b6; }
+    .preview-node.approval { background: #d9ecff; color: #409eff; border: 1px solid #a0cfff; }
+    .preview-node.gateway { background: #faecd8; color: #e6a23c; border: 1px solid #f3d19e; }
+    .preview-node.notification { background: #e8daef; color: #7c4dff; border: 1px solid #c5b3e9; }
+    .preview-node.service { background: #faecd8; color: #e6a23c; border: 1px solid #f3d19e; }
+    .preview-arrow { color: #c0c4cc; font-size: 18px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#409eff" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <span>流程引擎</span>
+      </div>
+      <div class="sidebar-nav">
+        <a v-for="m in menus" :key="m.key" :class="{active: currentPage === m.key}" @click="currentPage = m.key">
+          <span class="icon" v-html="m.icon"></span>
+          <span>{{ m.label }}</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="header" v-if="currentPage !== 'designer'">
+        <div class="header-title">{{ pageTitle }}</div>
+        <div class="header-right">
+          <span class="header-badge" title="3 条待办">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="dot"></span>
+          </span>
+          <el-dropdown>
+            <span style="cursor:pointer;display:flex;align-items:center;gap:6px;color:#606266;">
+              <el-avatar :size="32" style="background:#409eff;">管</el-avatar>
+              管理员
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>个人设置</el-dropdown-item>
+                <el-dropdown-item divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+
+      <!-- ==================== Dashboard ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'dashboard'">
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <div class="stat-info"><div class="stat-value">{{ stats.totalInstances }}</div><div class="stat-label">流程实例总数</div><div class="stat-trend up">+12.5% 较昨日</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="stat-info"><div class="stat-value">{{ stats.pendingTasks }}</div><div class="stat-label">待处理任务</div><div class="stat-trend down">-3.2% 较昨日</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="stat-info"><div class="stat-value">{{ stats.completedToday }}</div><div class="stat-label">今日已完成</div><div class="stat-trend up">+8.1% 较昨日</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="stat-info"><div class="stat-value">{{ stats.timeoutCount }}</div><div class="stat-label">超时任务</div><div class="stat-trend down">+2 较昨日</div></div>
+          </div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <h3>近 7 日流程趋势</h3>
+            <div class="css-bar-chart">
+              <div class="bar-group" v-for="(d, i) in trendData" :key="i">
+                <div class="bar-pair">
+                  <div class="bar blue" :style="{height: d.created * 2.5 + 'px'}" :title="'新建 ' + d.created"></div>
+                  <div class="bar green" :style="{height: d.completed * 2.5 + 'px'}" :title="'完成 ' + d.completed"></div>
+                </div>
+                <div class="bar-label">{{ d.label }}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:12px;color:#909399">
+              <span><span style="display:inline-block;width:10px;height:10px;background:#409eff;border-radius:2px;margin-right:4px"></span>新建实例</span>
+              <span><span style="display:inline-block;width:10px;height:10px;background:#67c23a;border-radius:2px;margin-right:4px"></span>完成实例</span>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>各模板实例分布</h3>
+            <div class="css-donut-wrapper">
+              <div class="css-donut">
+                <svg viewBox="0 0 100 100">
+                  <circle v-for="(s, i) in donutSegments" :key="i" cx="50" cy="50" r="35" fill="none" :stroke="s.color" stroke-width="14" :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" transform="rotate(-90 50 50)" />
+                </svg>
+              </div>
+              <div class="donut-legend">
+                <div v-for="(s, i) in donutData" :key="i" class="legend-item">
+                  <span class="legend-dot" :style="{background: s.color}"></span>
+                  <span class="legend-name">{{ s.name }}</span>
+                  <span class="legend-value">{{ s.value }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>最近流程动态</h3>
+          <el-table :data="recentActivities" stripe size="small">
+            <el-table-column prop="time" label="时间" width="160" />
+            <el-table-column prop="templateName" label="流程模板" width="140" />
+            <el-table-column prop="businessKey" label="业务编号" width="180" />
+            <el-table-column prop="action" label="操作" width="120" />
+            <el-table-column prop="operator" label="操作人" width="100" />
+            <el-table-column label="状态"><template #default="{row}"><el-tag :type="row.statusType" size="small">{{ row.status }}</el-tag></template></el-table-column>
+          </el-table>
+        </div>
+      </div>
+
+      <!-- ==================== Flow Designer ==================== -->
+      <div class="content-fullscreen" v-show="currentPage === 'designer'">
+        <div class="designer-layout">
+          <div class="designer-palette">
+            <div class="palette-header">节点面板</div>
+            <div class="palette-list">
+              <div class="palette-group">
+                <div class="palette-group-title">基础节点</div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'start')"><span class="node-dot start">&#9654;</span><span>开始节点</span></div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'end')"><span class="node-dot end">&#9632;</span><span>结束节点</span></div>
+              </div>
+              <div class="palette-group">
+                <div class="palette-group-title">任务节点</div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'approval')"><span class="node-dot approval">&#9998;</span><span>审批节点</span></div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'service')"><span class="node-dot service">&#9881;</span><span>服务节点</span></div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'subprocess')"><span class="node-dot subprocess">&#8681;</span><span>子流程</span></div>
+              </div>
+              <div class="palette-group">
+                <div class="palette-group-title">控制节点</div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'gateway')"><span class="node-dot gateway">&#9670;</span><span>网关</span></div>
+                <div class="palette-item" draggable="true" @dragstart="onPaletteDrag($event, 'notification')"><span class="node-dot notification">&#9993;</span><span>通知节点</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="designer-canvas-wrap">
+            <div class="designer-toolbar">
+              <button class="tb-btn" @click="undo" title="撤销">&#8617; 撤销</button>
+              <button class="tb-btn" @click="redo" title="重做">&#8618; 重做</button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" @click="zoomOut">&#8722;</button>
+              <span class="tb-zoom">{{ zoomLevel }}%</span>
+              <button class="tb-btn" @click="zoomIn">&#43;</button>
+              <button class="tb-btn" @click="zoomLevel = 100">适应</button>
+              <span class="tb-sep"></span>
+              <button class="tb-btn" @click="autoLayout">&#9638; 自动布局</button>
+              <button class="tb-btn" @click="validateFlow">&#10003; 校验</button>
+              <div class="tb-right">
+                <button class="tb-btn" @click="currentPage = 'templates'">取消</button>
+                <button class="tb-btn primary" @click="saveFlow">&#10003; 保存</button>
+              </div>
+            </div>
+            <div class="canvas-container" ref="canvasContainer" @dragover.prevent @drop="onCanvasDrop" @mousemove="onCanvasMouseMove" @mouseup="onCanvasMouseUp">
+              <div class="canvas-inner" :style="{transform: 'scale(' + zoomLevel/100 + ')'}">
+                <svg class="svg-connections">
+                  <defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="conn-arrow" /></marker></defs>
+                  <template v-for="(conn, ci) in connections" :key="ci">
+                    <path :d="connectionPath(conn)" class="connline" :class="{selected: selectedConn === ci}" marker-end="url(#arrowhead)" @click.stop="selectedConn = ci; selectedNode = null" />
+                    <text v-if="conn.condition" :x="connectionMidX(conn)" :y="connectionMidY(conn) - 8" class="conn-label">{{ conn.condition }}</text>
+                  </template>
+                  <path v-if="drawingConn" :d="drawingPath" class="connline" stroke-dasharray="6,3" marker-end="url(#arrowhead)" />
+                </svg>
+                <div v-for="node in canvasNodes" :key="node.id"
+                     class="canvas-node" :class="[node.type, {selected: selectedNode && selectedNode.id === node.id}]"
+                     :style="{left: node.x + 'px', top: node.y + 'px'}"
+                     @mousedown.stop="onNodeMouseDown($event, node)" @click.stop="selectNode(node)">
+                  <div class="node-type-label">{{ nodeTypeLabel(node.type) }}</div>
+                  <div class="node-name">{{ node.name }}</div>
+                  <div class="port top" @mousedown.stop="startConnection($event, node, 'top')"></div>
+                  <div class="port bottom" @mousedown.stop="startConnection($event, node, 'bottom')"></div>
+                  <div class="port left" @mousedown.stop="startConnection($event, node, 'left')"></div>
+                  <div class="port right" @mousedown.stop="startConnection($event, node, 'right')"></div>
+                  <button class="delete-btn" @click.stop="deleteNode(node)" title="删除">&times;</button>
+                </div>
+              </div>
+              <div class="minimap">
+                <div v-for="node in canvasNodes" :key="'m'+node.id" class="minimap-node"
+                     :style="{left: node.x/16.7 + 'px', top: node.y/16.7 + 'px', width: 7 + 'px', height: 5 + 'px', background: minimapColor(node.type)}"></div>
+                <div class="minimap-viewport" style="left:0;top:0;width:100%;height:100%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="designer-props">
+            <div class="props-header">
+              <span>{{ selectedNode ? nodeTypeLabel(selectedNode.type) + ' 配置' : '属性面板' }}</span>
+              <el-tag v-if="selectedNode" size="small" type="info">{{ selectedNode.type }}</el-tag>
+            </div>
+            <div class="props-body" v-if="selectedNode">
+              <el-form label-position="top" size="small">
+                <el-form-item label="节点名称"><el-input v-model="selectedNode.name" /></el-form-item>
+                <el-form-item label="节点标识"><el-input v-model="selectedNode.id" disabled /></el-form-item>
+                <template v-if="selectedNode.type === 'approval'">
+                  <el-form-item label="审批人策略">
+                    <el-select v-model="selectedNode.assigneeStrategy" style="width:100%">
+                      <el-option label="指定人员" value="specified" /><el-option label="指定角色" value="role" />
+                      <el-option label="发起人的上级" value="leader" /><el-option label="表单字段" value="formField" /><el-option label="外部接口" value="api" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="审批人" v-if="selectedNode.assigneeStrategy === 'specified'">
+                    <el-select v-model="selectedNode.assignee" style="width:100%" multiple placeholder="选择人员">
+                      <el-option label="张三" value="张三" /><el-option label="李四" value="李四" /><el-option label="王五" value="王五" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="角色" v-if="selectedNode.assigneeStrategy === 'role'">
+                    <el-select v-model="selectedNode.assignee" style="width:100%" placeholder="选择角色">
+                      <el-option label="部门经理" value="部门经理" /><el-option label="财务总监" value="财务总监" /><el-option label="总经理" value="总经理" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="审批模式">
+                    <el-radio-group v-model="selectedNode.approvalMode">
+                      <el-radio label="single">单人</el-radio><el-radio label="countersign">会签</el-radio><el-radio label="orsign">或签</el-radio>
+                    </el-radio-group>
+                  </el-form-item>
+                  <el-form-item label="超时(小时)"><el-input-number v-model="selectedNode.timeout" :min="0" :max="720" style="width:100%" /></el-form-item>
+                </template>
+                <template v-if="selectedNode.type === 'service'">
+                  <el-form-item label="服务类型">
+                    <el-select v-model="selectedNode.serviceType" style="width:100%">
+                      <el-option label="HTTP 请求" value="http" /><el-option label="脚本执行" value="script" /><el-option label="消息队列" value="mq" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="请求地址" v-if="selectedNode.serviceType === 'http'"><el-input v-model="selectedNode.apiUrl" placeholder="https://api.example.com/action" /></el-form-item>
+                  <el-form-item label="请求方法" v-if="selectedNode.serviceType === 'http'">
+                    <el-select v-model="selectedNode.apiMethod" style="width:100%"><el-option label="GET" value="GET" /><el-option label="POST" value="POST" /><el-option label="PUT" value="PUT" /></el-select>
+                  </el-form-item>
+                </template>
+                <template v-if="selectedNode.type === 'gateway'">
+                  <el-form-item label="网关类型">
+                    <el-select v-model="selectedNode.gatewayType" style="width:100%"><el-option label="排他网关" value="exclusive" /><el-option label="并行网关" value="parallel" /></el-select>
+                  </el-form-item>
+                </template>
+                <template v-if="selectedNode.type === 'notification'">
+                  <el-form-item label="通知渠道">
+                    <el-select v-model="selectedNode.channel" style="width:100%" multiple>
+                      <el-option label="邮件" value="email" /><el-option label="短信" value="sms" /><el-option label="钉钉" value="dingtalk" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="模板内容"><el-input v-model="selectedNode.template" type="textarea" :rows="3" placeholder="支持变量：${initiator}, ${businessKey}" /></el-form-item>
+                </template>
+                <template v-if="selectedNode.type === 'subprocess'">
+                  <el-form-item label="子流程">
+                    <el-select v-model="selectedNode.subProcessKey" style="width:100%" placeholder="选择子流程模板">
+                      <el-option v-for="t in templates.filter(x=>x.status==='published')" :key="t.key" :label="t.name" :value="t.key" />
+                    </el-select>
+                  </el-form-item>
+                </template>
+                <el-form-item label="备注"><el-input v-model="selectedNode.remark" type="textarea" :rows="2" /></el-form-item>
+              </el-form>
+            </div>
+            <div class="props-empty" v-else><span>点击节点查看属性</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== Templates ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'templates'">
+        <div class="page-card">
+          <div class="page-card-header"><h3>流程模板</h3><el-button type="primary" @click="openTemplateDialog()">+ 新建模板</el-button></div>
+          <div class="filter-bar">
+            <el-input v-model="templateSearch" placeholder="搜索模板名称 / Key" style="width:240px" clearable />
+            <el-select v-model="templateStatusFilter" placeholder="状态筛选" clearable style="width:140px">
+              <el-option label="已发布" value="published" /><el-option label="草稿" value="draft" /><el-option label="已停用" value="disabled" />
+            </el-select>
+          </div>
+          <el-table :data="filteredTemplates" stripe>
+            <el-table-column prop="name" label="模板名称" min-width="140"><template #default="{row}"><a style="color:#409eff;cursor:pointer" @click="viewTemplate(row)">{{ row.name }}</a></template></el-table-column>
+            <el-table-column prop="key" label="模板 Key" width="160" />
+            <el-table-column prop="version" label="版本" width="70" align="center"><template #default="{row}">v{{ row.version }}</template></el-table-column>
+            <el-table-column label="状态" width="90" align="center"><template #default="{row}"><el-tag :type="tplStatusType(row.status)" size="small">{{ tplStatusLabel(row.status) }}</el-tag></template></el-table-column>
+            <el-table-column prop="nodeCount" label="节点数" width="80" align="center" />
+            <el-table-column prop="instanceCount" label="实例数" width="80" align="center" />
+            <el-table-column prop="updatedAt" label="更新时间" width="160" />
+            <el-table-column prop="updatedBy" label="更新人" width="90" />
+            <el-table-column label="操作" width="220" fixed="right">
+              <template #default="{row}">
+                <el-button link type="primary" size="small" @click="editInDesigner(row)">设计</el-button>
+                <el-button link type="primary" size="small" @click="viewTemplate(row)">查看</el-button>
+                <el-button link type="primary" size="small" @click="showVersionHistory(row)">版本</el-button>
+                <el-button link v-if="row.status==='draft'" type="success" size="small" @click="publishTemplate(row)">发布</el-button>
+                <el-button link v-if="row.status==='published'" type="warning" size="small" @click="disableTemplate(row)">停用</el-button>
+                <el-button link type="danger" size="small" @click="deleteTemplate(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <el-dialog v-model="templateDialogVisible" :title="templateDialogTitle" width="500px" destroy-on-close>
+          <el-form :model="templateForm" label-width="90px">
+            <el-form-item label="模板名称" required><el-input v-model="templateForm.name" placeholder="请输入模板名称" /></el-form-item>
+            <el-form-item label="模板 Key" required><el-input v-model="templateForm.key" placeholder="如 leave_approval" :disabled="templateForm._editing" /></el-form-item>
+            <el-form-item label="分类">
+              <el-select v-model="templateForm.category" style="width:100%"><el-option label="审批流" value="approval" /><el-option label="业务流" value="business" /><el-option label="通知流" value="notification" /></el-select>
+            </el-form-item>
+            <el-form-item label="描述"><el-input v-model="templateForm.description" type="textarea" :rows="3" /></el-form-item>
+          </el-form>
+          <template #footer><el-button @click="templateDialogVisible = false">取消</el-button><el-button type="primary" @click="saveTemplate">保存</el-button></template>
+        </el-dialog>
+        <el-dialog v-model="templateDetailVisible" title="模板详情" width="800px" destroy-on-close>
+          <div v-if="templateDetail">
+            <div class="info-grid" style="margin-bottom:16px">
+              <div class="info-item"><span class="info-label">模板名称</span><span class="info-value">{{ templateDetail.name }}</span></div>
+              <div class="info-item"><span class="info-label">模板 Key</span><span class="info-value">{{ templateDetail.key }}</span></div>
+              <div class="info-item"><span class="info-label">当前版本</span><span class="info-value">v{{ templateDetail.version }}</span></div>
+              <div class="info-item"><span class="info-label">状态</span><span class="info-value"><el-tag :type="tplStatusType(templateDetail.status)" size="small">{{ tplStatusLabel(templateDetail.status) }}</el-tag></span></div>
+              <div class="info-item"><span class="info-label">创建人</span><span class="info-value">{{ templateDetail.createdBy }}</span></div>
+              <div class="info-item"><span class="info-label">更新时间</span><span class="info-value">{{ templateDetail.updatedAt }}</span></div>
+            </div>
+            <h4 style="margin-bottom:12px;color:#303133">流程预览</h4>
+            <div class="template-preview">
+              <template v-for="(n, i) in templateDetail.previewNodes" :key="i">
+                <div class="preview-node" :class="n.type">{{ n.name }}</div>
+                <span v-if="i < templateDetail.previewNodes.length - 1" class="preview-arrow">&#10132;</span>
+              </template>
+            </div>
+          </div>
+        </el-dialog>
+        <el-dialog v-model="versionHistoryVisible" title="版本历史" width="600px" destroy-on-close>
+          <div class="version-timeline" v-if="versionHistory.length">
+            <div class="vt-item" v-for="(v, i) in versionHistory" :key="i">
+              <div class="vt-dot" :class="i === 0 ? 'current' : 'old'"></div>
+              <div class="vt-line"></div>
+              <div class="vt-content">
+                <div class="vt-title">v{{ v.version }}<el-tag v-if="i === 0" size="small" type="success" style="margin-left:8px">当前版本</el-tag></div>
+                <div class="vt-meta">{{ v.publishedBy }} · {{ v.publishedAt }}</div>
+                <div class="vt-desc">{{ v.description }}</div>
+                <div style="margin-top:8px" v-if="i > 0"><el-button size="small" @click="compareVersion(v)">对比</el-button><el-button size="small" @click="rollbackVersion(v)">回滚</el-button></div>
+              </div>
+            </div>
+          </div>
+        </el-dialog>
+      </div>
+
+      <!-- ==================== Instances ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'instances'">
+        <div class="page-card">
+          <div class="page-card-header"><h3>流程实例监控</h3></div>
+          <div class="filter-bar">
+            <el-input v-model="instanceFilter.key" placeholder="搜索业务编号" style="width:200px" clearable />
+            <el-select v-model="instanceFilter.template" placeholder="流程模板" clearable style="width:160px"><el-option v-for="t in templates" :key="t.key" :label="t.name" :value="t.key" /></el-select>
+            <el-select v-model="instanceFilter.status" placeholder="状态" clearable style="width:120px">
+              <el-option label="运行中" value="running" /><el-option label="已完成" value="completed" /><el-option label="已挂起" value="suspended" /><el-option label="已终止" value="terminated" />
+            </el-select>
+          </div>
+          <el-table :data="filteredInstances" stripe>
+            <el-table-column prop="businessKey" label="业务编号" width="180" />
+            <el-table-column prop="templateName" label="流程模板" width="140" />
+            <el-table-column prop="initiator" label="发起人" width="100" />
+            <el-table-column label="当前节点" width="140"><template #default="{row}">{{ row.currentNode || '-' }}</template></el-table-column>
+            <el-table-column label="状态" width="100"><template #default="{row}"><el-tag :type="instStatusType(row.status)" size="small">{{ instStatusLabel(row.status) }}</el-tag></template></el-table-column>
+            <el-table-column prop="startTime" label="发起时间" width="160" />
+            <el-table-column label="耗时" width="100"><template #default="{row}">{{ row.duration || '-' }}</template></el-table-column>
+            <el-table-column label="操作" width="240" fixed="right">
+              <template #default="{row}">
+                <el-button link type="primary" size="small" @click="viewInstance(row)">详情</el-button>
+                <el-button link v-if="row.status==='running'" type="warning" size="small" @click="suspendInstance(row)">挂起</el-button>
+                <el-button link v-if="row.status==='suspended'" type="success" size="small" @click="resumeInstance(row)">恢复</el-button>
+                <el-button link v-if="row.status==='running'" type="primary" size="small" @click="jumpInstance(row)">跳转</el-button>
+                <el-button link v-if="row.status==='running'" type="danger" size="small" @click="terminateInstance(row)">终止</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <el-dialog v-model="instanceDetailVisible" title="实例详情" width="800px" destroy-on-close>
+          <div v-if="instanceDetail">
+            <div class="info-grid" style="margin-bottom:16px">
+              <div class="info-item"><span class="info-label">业务编号</span><span class="info-value">{{ instanceDetail.businessKey }}</span></div>
+              <div class="info-item"><span class="info-label">流程模板</span><span class="info-value">{{ instanceDetail.templateName }}</span></div>
+              <div class="info-item"><span class="info-label">发起人</span><span class="info-value">{{ instanceDetail.initiator }}</span></div>
+              <div class="info-item"><span class="info-label">状态</span><span class="info-value"><el-tag :type="instStatusType(instanceDetail.status)" size="small">{{ instStatusLabel(instanceDetail.status) }}</el-tag></span></div>
+              <div class="info-item"><span class="info-label">发起时间</span><span class="info-value">{{ instanceDetail.startTime }}</span></div>
+              <div class="info-item"><span class="info-label">耗时</span><span class="info-value">{{ instanceDetail.duration || '-' }}</span></div>
+            </div>
+            <h4 style="margin-bottom:12px;color:#303133">流程变量</h4>
+            <el-table :data="instanceVars" stripe size="small" style="margin-bottom:16px">
+              <el-table-column prop="name" label="变量名" width="160" /><el-table-column prop="value" label="变量值" /><el-table-column prop="type" label="类型" width="100" />
+            </el-table>
+            <h4 style="margin-bottom:12px;color:#303133">执行轨迹</h4>
+            <div style="padding: 0 4px;">
+              <div v-for="(step, si) in instanceDetail.steps" :key="si" style="display:flex;gap:12px;padding-bottom:16px;position:relative;">
+                <div :style="{width:'12px',height:'12px',borderRadius:'50%',marginTop:'4px',flexShrink:0,background: step.status==='done'?'#67c23a':step.status==='current'?'#409eff':'#dcdfe6',zIndex:1,position:'relative',boxShadow: step.status==='current'?'0 0 0 4px rgba(64,158,255,.2)':'none'}"></div>
+                <div v-if="si < instanceDetail.steps.length - 1" style="position:absolute;left:5px;top:16px;bottom:0;width:2px;background:#e4e7ed;"></div>
+                <div style="flex:1">
+                  <div style="font-size:14px;color:#303133;font-weight:500">{{ step.name }}</div>
+                  <div style="font-size:12px;color:#909399;margin-top:4px">{{ step.operator }} · {{ step.time }}</div>
+                  <div v-if="step.comment" style="font-size:13px;color:#606266;margin-top:6px;padding:8px 12px;background:#f5f7fa;border-radius:4px">{{ step.comment }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-dialog>
+      </div>
+
+      <!-- ==================== Tasks ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'tasks'">
+        <div class="page-card" style="margin-bottom:16px">
+          <div class="page-card-header"><h3>任务管理</h3></div>
+          <div class="filter-bar">
+            <el-radio-group v-model="taskTab" size="small">
+              <el-radio-button label="todo">我的待办 ({{ todoTasks.length }})</el-radio-button>
+              <el-radio-button label="done">已办任务</el-radio-button>
+              <el-radio-button label="all">全部任务</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div v-for="task in currentTasks" :key="task.id" class="task-card">
+            <div class="task-card-header">
+              <span class="task-card-title">{{ task.title }}</span>
+              <el-tag :type="task.urgent ? 'danger' : 'info'" size="small">{{ task.templateName }}</el-tag>
+            </div>
+            <div class="task-card-body">
+              <span>发起人：{{ task.initiator }}</span>
+              <span>业务编号：{{ task.businessKey }}</span>
+              <span>到达时间：{{ task.createTime }}</span>
+              <span v-if="task.duration">耗时：{{ task.duration }}</span>
+            </div>
+            <div class="task-card-footer">
+              <el-button v-if="task.status==='pending'" type="primary" size="small" @click="openApproval(task)">审批</el-button>
+              <el-button v-if="task.status==='pending'" size="small" @click="openDelegate(task)">转办</el-button>
+              <el-button v-if="task.status==='pending'" type="warning" size="small" @click="openCountersign(task)">加签</el-button>
+              <el-button size="small" @click="viewTaskDetail(task)">查看</el-button>
+            </div>
+          </div>
+          <div v-if="!currentTasks.length" style="text-align:center;padding:40px;color:#c0c4cc">暂无任务</div>
+        </div>
+        <el-dialog v-model="approvalVisible" title="审批处理" width="500px" destroy-on-close>
+          <div v-if="approvalTask" style="margin-bottom:16px">
+            <div style="padding:12px;background:#f5f7fa;border-radius:6px;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:600;color:#303133">{{ approvalTask.title }}</div>
+              <div style="font-size:13px;color:#909399;margin-top:4px">{{ approvalTask.initiator }} · {{ approvalTask.businessKey }}</div>
+            </div>
+          </div>
+          <el-form label-width="80px">
+            <el-form-item label="审批意见"><el-radio-group v-model="approvalForm.result"><el-radio label="approve">通过</el-radio><el-radio label="reject">驳回</el-radio></el-radio-group></el-form-item>
+            <el-form-item label="批注"><el-input v-model="approvalForm.comment" type="textarea" :rows="3" placeholder="请输入审批意见" /></el-form-item>
+          </el-form>
+          <template #footer><el-button @click="approvalVisible = false">取消</el-button><el-button type="primary" @click="submitApproval">确认</el-button></template>
+        </el-dialog>
+        <el-dialog v-model="delegateVisible" title="转办任务" width="400px" destroy-on-close>
+          <el-form label-width="80px">
+            <el-form-item label="转办给"><el-select v-model="delegateForm.target" style="width:100%" placeholder="选择人员"><el-option label="张三" value="张三" /><el-option label="李四" value="李四" /><el-option label="王五" value="王五" /></el-select></el-form-item>
+            <el-form-item label="备注"><el-input v-model="delegateForm.remark" type="textarea" :rows="2" /></el-form-item>
+          </el-form>
+          <template #footer><el-button @click="delegateVisible = false">取消</el-button><el-button type="primary" @click="submitDelegate">确认转办</el-button></template>
+        </el-dialog>
+        <el-dialog v-model="countersignVisible" title="加签" width="450px" destroy-on-close>
+          <el-form label-width="80px">
+            <el-form-item label="加签方式"><el-radio-group v-model="countersignForm.mode"><el-radio label="before">前加签</el-radio><el-radio label="after">后加签</el-radio></el-radio-group></el-form-item>
+            <el-form-item label="加签人员">
+              <el-select v-model="countersignForm.users" style="width:100%" multiple placeholder="选择人员">
+                <el-option label="张三" value="张三" /><el-option label="李四" value="李四" /><el-option label="王五" value="王五" /><el-option label="赵六" value="赵六" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="说明"><el-input v-model="countersignForm.reason" type="textarea" :rows="2" placeholder="加签原因" /></el-form-item>
+          </el-form>
+          <template #footer><el-button @click="countersignVisible = false">取消</el-button><el-button type="primary" @click="submitCountersign">确认加签</el-button></template>
+        </el-dialog>
+      </div>
+
+      <!-- ==================== Logs ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'logs'">
+        <div class="page-card">
+          <div class="page-card-header"><h3>操作日志</h3><el-button size="small" @click="exportLogs">导出</el-button></div>
+          <div class="filter-bar">
+            <el-input v-model="logFilter.keyword" placeholder="搜索操作人 / 业务编号" style="width:220px" clearable />
+            <el-select v-model="logFilter.type" placeholder="操作类型" clearable style="width:140px">
+              <el-option label="创建" value="create" /><el-option label="审批" value="approve" /><el-option label="驳回" value="reject" /><el-option label="转办" value="delegate" /><el-option label="系统" value="system" />
+            </el-select>
+            <el-date-picker v-model="logFilter.dateRange" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" style="width:260px" />
+          </div>
+          <el-table :data="filteredLogs" stripe>
+            <el-table-column prop="time" label="时间" width="160" />
+            <el-table-column label="类型" width="90"><template #default="{row}"><span class="log-type" :class="row.type">{{ logTypeLabel(row.type) }}</span></template></el-table-column>
+            <el-table-column prop="operator" label="操作人" width="100" />
+            <el-table-column prop="businessKey" label="业务编号" width="180" />
+            <el-table-column prop="templateName" label="流程模板" width="140" />
+            <el-table-column prop="action" label="操作" />
+            <el-table-column prop="comment" label="备注" />
+          </el-table>
+        </div>
+      </div>
+
+      <!-- ==================== API Management ==================== -->
+      <div :class="currentPage === 'designer' ? 'content-fullscreen' : 'content'" v-show="currentPage === 'api'">
+        <div class="page-card" style="margin-bottom:16px">
+          <div class="page-card-header"><h3>应用接入</h3><el-button type="primary" size="small" @click="createApp">+ 新建应用</el-button></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="api-card" v-for="app in apiApps" :key="app.id">
+              <div class="api-card-header"><span class="api-card-title">{{ app.name }}</span><el-tag :type="app.status === 'active' ? 'success' : 'info'" size="small">{{ app.status === 'active' ? '已启用' : '已禁用' }}</el-tag></div>
+              <div style="font-size:13px;color:#909399;margin-bottom:8px">{{ app.description }}</div>
+              <div class="api-key-box"><span>{{ app.apiKey }}</span><el-button link type="primary" size="small" @click="copyKey(app.apiKey)">复制</el-button><el-button link type="primary" size="small" @click="resetKey(app)">重置</el-button></div>
+              <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:#909399"><span>今日调用：{{ app.todayCalls }}</span><span>累计调用：{{ app.totalCalls }}</span><span>创建：{{ app.createdAt }}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="page-card">
+          <div class="page-card-header"><h3>API 接口文档</h3></div>
+          <el-table :data="apiEndpoints" stripe>
+            <el-table-column label="方法" width="80"><template #default="{row}"><span class="api-method" :class="row.method.toLowerCase()">{{ row.method }}</span></template></el-table-column>
+            <el-table-column prop="path" label="路径" width="280" />
+            <el-table-column prop="name" label="接口名称" width="160" />
+            <el-table-column prop="description" label="描述" />
+            <el-table-column label="认证" width="80" align="center"><template #default="{row}"><el-tag v-if="row.auth" size="small" type="warning">是</el-tag><el-tag v-else size="small" type="info">否</el-tag></template></el-table-column>
+            <el-table-column label="操作" width="100"><template #default><el-button link type="primary" size="small">调试</el-button></template></el-table-column>
+          </el-table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, computed, reactive, nextTick } = Vue;
+const app = createApp({
+  setup() {
+    const currentPage = ref('dashboard');
+    const menus = [
+      { key: 'dashboard', label: '数据概览', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>' },
+      { key: 'designer', label: '流程设计', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>' },
+      { key: 'templates', label: '模板管理', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>' },
+      { key: 'instances', label: '实例监控', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' },
+      { key: 'tasks', label: '任务管理', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+      { key: 'logs', label: '操作日志', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
+      { key: 'api', label: '开放 API', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>' },
+    ];
+    const pageTitle = computed(() => { const m = menus.find(x => x.key === currentPage.value); return m ? m.label : ''; });
+
+    const stats = reactive({ totalInstances: 1284, pendingTasks: 56, completedToday: 89, timeoutCount: 7 });
+    const trendData = [
+      { label: '09/17', created: 32, completed: 28 },{ label: '09/18', created: 45, completed: 38 },
+      { label: '09/19', created: 28, completed: 32 },{ label: '09/20', created: 52, completed: 48 },
+      { label: '09/21', created: 38, completed: 35 },{ label: '09/22', created: 60, completed: 55 },
+      { label: '09/23', created: 42, completed: 40 },
+    ];
+    const donutData = [
+      { name: '请假审批', value: 320, color: '#409eff' },{ name: '采购审批', value: 245, color: '#67c23a' },
+      { name: '报销审批', value: 198, color: '#e6a23c' },{ name: '合同审批', value: 156, color: '#f56c6c' },
+      { name: '设备保养', value: 128, color: '#9b59b6' },
+    ];
+    const donutTotal = computed(() => donutData.reduce((s, d) => s + d.value, 0));
+    const donutSegments = computed(() => {
+      const c = 2 * Math.PI * 35; let o = 0;
+      return donutData.map(d => { const p = d.value / donutTotal.value; const dash = p * c; const seg = { color: d.color, dash: dash + ' ' + (c - dash), offset: -o }; o += dash; return seg; });
+    });
+    const recentActivities = ref([
+      { time: '2026-09-23 14:32', templateName: '请假审批', businessKey: 'LV-20260923-001', action: '提交申请', operator: '张三', status: '审批中', statusType: 'warning' },
+      { time: '2026-09-23 14:15', templateName: '采购审批', businessKey: 'CG-20260923-003', action: '部门经理审批', operator: '李四', status: '已通过', statusType: 'success' },
+      { time: '2026-09-23 13:50', templateName: '报销审批', businessKey: 'BX-20260922-012', action: '财务审核', operator: '王五', status: '已驳回', statusType: 'danger' },
+      { time: '2026-09-23 11:20', templateName: '合同审批', businessKey: 'HT-20260922-008', action: '法务审核', operator: '赵六', status: '审批中', statusType: 'warning' },
+      { time: '2026-09-23 10:05', templateName: '设备保养', businessKey: 'SB-20260923-002', action: '保养完成', operator: '孙七', status: '已完成', statusType: 'success' },
+    ]);
+
+    // ===== Templates =====
+    const templates = ref([
+      { name: '请假审批', key: 'leave_approval', version: 3, status: 'published', category: 'approval', description: '员工请假审批流程', nodeCount: 6, instanceCount: 320, updatedAt: '2026-09-20 16:30', updatedBy: '管理员', createdBy: '管理员',
+        previewNodes: [{ type: 'start', name: '开始' }, { type: 'approval', name: '直属领导审批' }, { type: 'gateway', name: '天数判断' }, { type: 'approval', name: '部门经理审批' }, { type: 'notification', name: '通知申请人' }, { type: 'end', name: '结束' }],
+        nodes: [{ id: 'start', type: 'start', name: '开始', x: 100, y: 200 }, { id: 'n1', type: 'approval', name: '直属领导审批', x: 300, y: 200 }, { id: 'gw1', type: 'gateway', name: '天数判断', x: 500, y: 200 }, { id: 'n2', type: 'approval', name: '部门经理审批', x: 700, y: 120 }, { id: 'n3', type: 'notification', name: '通知申请人', x: 700, y: 300 }, { id: 'end', type: 'end', name: '结束', x: 900, y: 200 }],
+        edges: [{ from: 'start', to: 'n1' }, { from: 'n1', to: 'gw1' }, { from: 'gw1', to: 'n2', condition: '>3天' }, { from: 'gw1', to: 'n3', condition: '≤3天' }, { from: 'n2', to: 'end' }, { from: 'n3', to: 'end' }],
+        versions: [{ version: 3, publishedBy: '管理员', publishedAt: '2026-09-20 16:30', description: '增加部门经理审批节点' }, { version: 2, publishedBy: '管理员', publishedAt: '2026-08-15 10:00', description: '增加通知节点' }, { version: 1, publishedBy: '管理员', publishedAt: '2026-07-01 09:00', description: '初始版本' }],
+      },
+      { name: '采购审批', key: 'purchase_approval', version: 2, status: 'published', category: 'approval', description: '采购申请审批流程', nodeCount: 5, instanceCount: 245, updatedAt: '2026-09-18 11:00', updatedBy: '管理员', createdBy: '管理员',
+        previewNodes: [{ type: 'start', name: '开始' }, { type: 'approval', name: '部门审批' }, { type: 'approval', name: '财务审批' }, { type: 'service', name: '生成订单' }, { type: 'end', name: '结束' }],
+        nodes: [{ id: 'start', type: 'start', name: '开始', x: 100, y: 200 }, { id: 'n1', type: 'approval', name: '部门审批', x: 300, y: 200 }, { id: 'n2', type: 'approval', name: '财务审批', x: 500, y: 200 }, { id: 'n3', type: 'service', name: '生成订单', x: 700, y: 200 }, { id: 'end', type: 'end', name: '结束', x: 900, y: 200 }],
+        edges: [{ from: 'start', to: 'n1' }, { from: 'n1', to: 'n2' }, { from: 'n2', to: 'n3' }, { from: 'n3', to: 'end' }],
+        versions: [{ version: 2, publishedBy: '管理员', publishedAt: '2026-09-18 11:00', description: '增加服务节点' }, { version: 1, publishedBy: '管理员', publishedAt: '2026-08-01 09:00', description: '初始版本' }],
+      },
+      { name: '报销审批', key: 'expense_approval', version: 1, status: 'draft', category: 'approval', description: '费用报销审批流程', nodeCount: 4, instanceCount: 198, updatedAt: '2026-09-22 09:30', updatedBy: '管理员', createdBy: '管理员',
+        previewNodes: [{ type: 'start', name: '开始' }, { type: 'approval', name: '主管审批' }, { type: 'approval', name: '财务审批' }, { type: 'end', name: '结束' }],
+        nodes: [{ id: 'start', type: 'start', name: '开始', x: 100, y: 200 }, { id: 'n1', type: 'approval', name: '主管审批', x: 300, y: 200 }, { id: 'n2', type: 'approval', name: '财务审批', x: 500, y: 200 }, { id: 'end', type: 'end', name: '结束', x: 700, y: 200 }],
+        edges: [{ from: 'start', to: 'n1' }, { from: 'n1', to: 'n2' }, { from: 'n2', to: 'end' }],
+        versions: [{ version: 1, publishedBy: '管理员', publishedAt: '2026-09-22 09:30', description: '草稿版本' }],
+      },
+      { name: '合同审批', key: 'contract_approval', version: 1, status: 'published', category: 'business', description: '合同审批流程', nodeCount: 5, instanceCount: 156, updatedAt: '2026-09-15 14:00', updatedBy: '管理员', createdBy: '管理员',
+        previewNodes: [{ type: 'start', name: '开始' }, { type: 'approval', name: '法务审核' }, { type: 'approval', name: '总经理审批' }, { type: 'notification', name: '通知' }, { type: 'end', name: '结束' }],
+        nodes: [{ id: 'start', type: 'start', name: '开始', x: 100, y: 200 }, { id: 'n1', type: 'approval', name: '法务审核', x: 300, y: 200 }, { id: 'n2', type: 'approval', name: '总经理审批', x: 500, y: 200 }, { id: 'n3', type: 'notification', name: '通知', x: 700, y: 200 }, { id: 'end', type: 'end', name: '结束', x: 900, y: 200 }],
+        edges: [{ from: 'start', to: 'n1' }, { from: 'n1', to: 'n2' }, { from: 'n2', to: 'n3' }, { from: 'n3', to: 'end' }],
+        versions: [{ version: 1, publishedBy: '管理员', publishedAt: '2026-09-15 14:00', description: '初始版本' }],
+      },
+      { name: '设备保养流程', key: 'equipment_maintenance', version: 2, status: 'published', category: 'business', description: '设备定期保养流程', nodeCount: 5, instanceCount: 128, updatedAt: '2026-09-10 10:00', updatedBy: '管理员', createdBy: '管理员',
+        previewNodes: [{ type: 'start', name: '开始' }, { type: 'service', name: '生成保养任务' }, { type: 'approval', name: '维修确认' }, { type: 'notification', name: '完成通知' }, { type: 'end', name: '结束' }],
+        nodes: [{ id: 'start', type: 'start', name: '开始', x: 100, y: 200 }, { id: 'n1', type: 'service', name: '生成保养任务', x: 300, y: 200 }, { id: 'n2', type: 'approval', name: '维修确认', x: 500, y: 200 }, { id: 'n3', type: 'notification', name: '完成通知', x: 700, y: 200 }, { id: 'end', type: 'end', name: '结束', x: 900, y: 200 }],
+        edges: [{ from: 'start', to: 'n1' }, { from: 'n1', to: 'n2' }, { from: 'n2', to: 'n3' }, { from: 'n3', to: 'end' }],
+        versions: [{ version: 2, publishedBy: '管理员', publishedAt: '2026-09-10 10:00', description: '增加完成通知节点' }, { version: 1, publishedBy: '管理员', publishedAt: '2026-08-05 09:00', description: '初始版本' }],
+      },
+    ]);
+    const templateSearch = ref('');
+    const templateStatusFilter = ref('');
+    const filteredTemplates = computed(() => templates.value.filter(t => {
+      if (templateSearch.value && !t.name.includes(templateSearch.value) && !t.key.includes(templateSearch.value)) return false;
+      if (templateStatusFilter.value && t.status !== templateStatusFilter.value) return false;
+      return true;
+    }));
+    const templateDialogVisible = ref(false);
+    const templateDialogTitle = ref('新建模板');
+    const templateForm = reactive({ name: '', key: '', category: 'approval', description: '', _editing: false });
+    const templateDetailVisible = ref(false);
+    const templateDetail = ref(null);
+    const versionHistoryVisible = ref(false);
+    const versionHistory = ref([]);
+
+    function tplStatusType(s) { return s === 'published' ? 'success' : s === 'draft' ? 'warning' : 'danger'; }
+    function tplStatusLabel(s) { return s === 'published' ? '已发布' : s === 'draft' ? '草稿' : '已停用'; }
+    function openTemplateDialog(row) {
+      if (row) { templateDialogTitle.value = '编辑模板'; Object.assign(templateForm, { name: row.name, key: row.key, category: row.category, description: row.description, _editing: true }); }
+      else { templateDialogTitle.value = '新建模板'; Object.assign(templateForm, { name: '', key: '', category: 'approval', description: '', _editing: false }); }
+      templateDialogVisible.value = true;
+    }
+    function saveTemplate() {
+      if (!templateForm.name || !templateForm.key) return ElementPlus.ElMessage.warning('请填写必填项');
+      if (templateForm._editing) { const t = templates.value.find(x => x.key === templateForm.key); if (t) { t.name = templateForm.name; t.category = templateForm.category; t.description = templateForm.description; } }
+      else { templates.value.push({ name: templateForm.name, key: templateForm.key, version: 1, status: 'draft', category: templateForm.category, description: templateForm.description, nodeCount: 0, instanceCount: 0, updatedAt: '2026-09-23 15:00', updatedBy: '管理员', createdBy: '管理员', previewNodes: [], nodes: [], edges: [], versions: [{ version: 1, publishedBy: '管理员', publishedAt: '2026-09-23 15:00', description: '草稿版本' }] }); }
+      templateDialogVisible.value = false;
+      ElementPlus.ElMessage.success('保存成功');
+    }
+    function viewTemplate(row) { templateDetail.value = row; templateDetailVisible.value = true; }
+    function showVersionHistory(row) { versionHistory.value = row.versions || []; versionHistoryVisible.value = true; }
+    function publishTemplate(row) { row.status = 'published'; ElementPlus.ElMessage.success('发布成功'); }
+    function disableTemplate(row) { row.status = 'disabled'; ElementPlus.ElMessage.success('已停用'); }
+    function deleteTemplate(row) { ElementPlus.ElMessageBox.confirm('确认删除模板 "' + row.name + '"？', '提示', { type: 'warning' }).then(() => { templates.value = templates.value.filter(t => t.key !== row.key); ElementPlus.ElMessage.success('已删除'); }).catch(() => {}); }
+    function editInDesigner(row) { loadDesignerNodes(row); currentPage.value = 'designer'; }
+    function compareVersion(v) { ElementPlus.ElMessage.info('版本对比功能开发中'); }
+    function rollbackVersion(v) { ElementPlus.ElMessage.info('回滚到 v' + v.version + ' 功能开发中'); }
+
+    // ===== Flow Designer =====
+    const canvasNodes = ref([]);
+    const connections = ref([]);
+    const selectedNode = ref(null);
+    const selectedConn = ref(null);
+    const zoomLevel = ref(100);
+    const canvasContainer = ref(null);
+    const drawingConn = ref(null);
+    const undoStack = ref([]);
+    const redoStack = ref([]);
+    let dragState = null;
+    let connStart = null;
+
+    function nodeTypeLabel(t) { return { start: '开始节点', end: '结束节点', approval: '审批节点', service: '服务节点', gateway: '网关节点', subprocess: '子流程', notification: '通知节点' }[t] || t; }
+    function minimapColor(t) { return { start: '#67c23a', end: '#f56c6c', approval: '#409eff', service: '#e6a23c', gateway: '#9b59b6', subprocess: '#1abc9c', notification: '#7c4dff' }[t] || '#c0c4cc'; }
+
+    function loadDesignerNodes(tpl) {
+      if (tpl && tpl.nodes) {
+        canvasNodes.value = tpl.nodes.map(n => ({ ...n, assigneeStrategy: n.assigneeStrategy || 'specified', assignee: n.assignee || '', approvalMode: n.approvalMode || 'single', timeout: n.timeout || 24, serviceType: n.serviceType || 'http', apiUrl: n.apiUrl || '', apiMethod: n.apiMethod || 'POST', gatewayType: n.gatewayType || 'exclusive', channel: n.channel || [], template: n.template || '', subProcessKey: n.subProcessKey || '', remark: n.remark || '' }));
+        connections.value = (tpl.edges || []).map(e => ({ ...e }));
+      } else {
+        canvasNodes.value = [{ id: 'start_1', type: 'start', name: '开始', x: 100, y: 200, remark: '' }];
+        connections.value = [];
+      }
+      selectedNode.value = null; selectedConn.value = null; undoStack.value = []; redoStack.value = [];
+    }
+
+    function onPaletteDrag(e, type) { e.dataTransfer.setData('nodeType', type); }
+    function onCanvasDrop(e) {
+      const type = e.dataTransfer.getData('nodeType');
+      if (!type) return;
+      const rect = canvasContainer.value.getBoundingClientRect();
+      const x = Math.round(((e.clientX - rect.left) / (zoomLevel.value / 100) - 60) / 20) * 20;
+      const y = Math.round(((e.clientY - rect.top) / (zoomLevel.value / 100) - 20) / 20) * 20;
+      const id = type + '_' + Date.now();
+      const nameMap = { start: '开始', end: '结束', approval: '审批节点', service: '服务节点', gateway: '网关', subprocess: '子流程', notification: '通知' };
+      pushUndo();
+      canvasNodes.value.push({ id, type, name: nameMap[type] || type, x, y, assigneeStrategy: 'specified', assignee: '', approvalMode: 'single', timeout: 24, serviceType: 'http', apiUrl: '', apiMethod: 'POST', gatewayType: 'exclusive', channel: [], template: '', subProcessKey: '', remark: '' });
+    }
+    function onNodeMouseDown(e, node) {
+      if (e.target.classList.contains('port') || e.target.classList.contains('delete-btn')) return;
+      dragState = { node, startX: e.clientX, startY: e.clientY, origX: node.x, origY: node.y };
+    }
+    function onCanvasMouseMove(e) {
+      if (dragState) {
+        const dx = (e.clientX - dragState.startX) / (zoomLevel.value / 100);
+        const dy = (e.clientY - dragState.startY) / (zoomLevel.value / 100);
+        dragState.node.x = Math.round((dragState.origX + dx) / 20) * 20;
+        dragState.node.y = Math.round((dragState.origY + dy) / 20) * 20;
+      }
+      if (connStart) {
+        const rect = canvasContainer.value.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) / (zoomLevel.value / 100);
+        const my = (e.clientY - rect.top) / (zoomLevel.value / 100);
+        drawingConn.value = { ...connStart, mx, my };
+      }
+    }
+    function onCanvasMouseUp(e) {
+      if (dragState) { pushUndo(); dragState = null; }
+      if (connStart && drawingConn.value) {
+        const rect = canvasContainer.value.getBoundingClientRect();
+        const mx = drawingConn.value.mx;
+        const my = drawingConn.value.my;
+        const target = canvasNodes.value.find(n => mx >= n.x && mx <= n.x + 120 && my >= n.y && my <= n.y + 50 && n.id !== connStart.nodeId);
+        if (target) { pushUndo(); connections.value.push({ from: connStart.nodeId, to: target.id }); }
+      }
+      connStart = null; drawingConn.value = null;
+    }
+    function startConnection(e, node, port) {
+      const pos = getNodePortPos(node, port);
+      connStart = { nodeId: node.id, port, x: pos.x, y: pos.y };
+    }
+    function getNodePortPos(node, port) {
+      const w = 120, h = 50;
+      return { top: { x: node.x + w/2, y: node.y }, bottom: { x: node.x + w/2, y: node.y + h }, left: { x: node.x, y: node.y + h/2 }, right: { x: node.x + w, y: node.y + h/2 } }[port] || { x: node.x + w/2, y: node.y + h };
+    }
+    function selectNode(node) { selectedNode.value = node; selectedConn.value = null; }
+    function deleteNode(node) {
+      pushUndo(); canvasNodes.value = canvasNodes.value.filter(n => n.id !== node.id);
+      connections.value = connections.value.filter(c => c.from !== node.id && c.to !== node.id);
+      if (selectedNode.value && selectedNode.value.id === node.id) selectedNode.value = null;
+    }
+    function connectionPath(conn) {
+      const fn = canvasNodes.value.find(n => n.id === conn.from);
+      const tn = canvasNodes.value.find(n => n.id === conn.to);
+      if (!fn || !tn) return '';
+      const f = getNodePortPos(fn, 'bottom'), t = getNodePortPos(tn, 'top');
+      const cp = Math.max(Math.abs(t.y - f.y) * 0.5, 40);
+      return 'M' + f.x + ',' + f.y + ' C' + f.x + ',' + (f.y + cp) + ' ' + t.x + ',' + (t.y - cp) + ' ' + t.x + ',' + t.y;
+    }
+    function connectionMidX(conn) { const fn = canvasNodes.value.find(n => n.id === conn.from); const tn = canvasNodes.value.find(n => n.id === conn.to); if (!fn || !tn) return 0; return (getNodePortPos(fn, 'bottom').x + getNodePortPos(tn, 'top').x) / 2; }
+    function connectionMidY(conn) { const fn = canvasNodes.value.find(n => n.id === conn.from); const tn = canvasNodes.value.find(n => n.id === conn.to); if (!fn || !tn) return 0; return (getNodePortPos(fn, 'bottom').y + getNodePortPos(tn, 'top').y) / 2; }
+    const drawingPath = computed(() => { if (!drawingConn.value) return ''; const d = drawingConn.value; return 'M' + d.x + ',' + d.y + ' C' + d.x + ',' + (d.y + 60) + ' ' + d.mx + ',' + (d.my - 60) + ' ' + d.mx + ',' + d.my; });
+
+    function pushUndo() { undoStack.value.push(JSON.stringify({ nodes: canvasNodes.value, conns: connections.value })); if (undoStack.value.length > 50) undoStack.value.shift(); redoStack.value = []; }
+    function undo() { if (!undoStack.value.length) return; redoStack.value.push(JSON.stringify({ nodes: canvasNodes.value, conns: connections.value })); const s = JSON.parse(undoStack.value.pop()); canvasNodes.value = s.nodes; connections.value = s.conns; }
+    function redo() { if (!redoStack.value.length) return; undoStack.value.push(JSON.stringify({ nodes: canvasNodes.value, conns: connections.value })); const s = JSON.parse(redoStack.value.pop()); canvasNodes.value = s.nodes; connections.value = s.conns; }
+    function zoomIn() { zoomLevel.value = Math.min(200, zoomLevel.value + 10); }
+    function zoomOut() { zoomLevel.value = Math.max(25, zoomLevel.value - 10); }
+    function autoLayout() {
+      pushUndo();
+      const startNode = canvasNodes.value.find(n => n.type === 'start');
+      if (!startNode) return;
+      const visited = new Set(); const levels = {};
+      function bfs(id, lv) { if (visited.has(id)) return; visited.add(id); levels[id] = Math.max(levels[id] || 0, lv); connections.value.filter(c => c.from === id).forEach(c => bfs(c.to, lv + 1)); }
+      bfs(startNode.id, 0);
+      const byLevel = {};
+      Object.entries(levels).forEach(([id, lv]) => { if (!byLevel[lv]) byLevel[lv] = []; byLevel[lv].push(id); });
+      Object.entries(byLevel).forEach(([lv, ids]) => { ids.forEach((id, i) => { const node = canvasNodes.value.find(n => n.id === id); if (node) { node.x = 100 + parseInt(lv) * 200; node.y = 100 + i * 120; } }); });
+      ElementPlus.ElMessage.success('自动布局完成');
+    }
+    function validateFlow() {
+      const starts = canvasNodes.value.filter(n => n.type === 'start');
+      const ends = canvasNodes.value.filter(n => n.type === 'end');
+      if (!starts.length) return ElementPlus.ElMessage.error('缺少开始节点');
+      if (starts.length > 1) return ElementPlus.ElMessage.error('只能有 1 个开始节点');
+      if (!ends.length) return ElementPlus.ElMessage.error('缺少结束节点');
+      const noOut = canvasNodes.value.filter(n => n.type !== 'end' && !connections.value.some(c => c.from === n.id));
+      if (noOut.length) return ElementPlus.ElMessage.error('节点 "' + noOut[0].name + '" 没有出线');
+      const noIn = canvasNodes.value.filter(n => n.type !== 'start' && !connections.value.some(c => c.to === n.id));
+      if (noIn.length) return ElementPlus.ElMessage.error('节点 "' + noIn[0].name + '" 没有入线');
+      ElementPlus.ElMessage.success('校验通过，流程定义合法');
+    }
+    function saveFlow() { ElementPlus.ElMessage.success('流程保存成功'); nextTick(() => { currentPage.value = 'templates'; }); }
+
+    // ===== Instances =====
+    const instances = ref([
+      { businessKey: 'LV-20260923-001', templateKey: 'leave_approval', templateName: '请假审批', initiator: '张三', currentNode: '直属领导审批', status: 'running', startTime: '2026-09-23 09:00', duration: '5h32m',
+        steps: [{ name: '提交申请', operator: '张三', time: '2026-09-23 09:00', status: 'done', comment: '申请年假3天' }, { name: '直属领导审批', operator: '李四', time: '', status: 'current', comment: '' }],
+        vars: [{ name: 'days', value: '3', type: 'number' }, { name: 'type', value: '年假', type: 'string' }] },
+      { businessKey: 'CG-20260923-003', templateKey: 'purchase_approval', templateName: '采购审批', initiator: '王五', currentNode: '财务审批', status: 'running', startTime: '2026-09-23 10:30', duration: '4h',
+        steps: [{ name: '提交申请', operator: '王五', time: '2026-09-23 10:30', status: 'done', comment: '采购电脑5台' }, { name: '部门审批', operator: '李四', time: '2026-09-23 11:00', status: 'done', comment: '同意' }, { name: '财务审批', operator: '赵六', time: '', status: 'current', comment: '' }],
+        vars: [{ name: 'amount', value: '25000', type: 'number' }] },
+      { businessKey: 'BX-20260922-012', templateKey: 'expense_approval', templateName: '报销审批', initiator: '孙七', currentNode: '-', status: 'completed', startTime: '2026-09-22 14:00', duration: '1d2h',
+        steps: [{ name: '提交申请', operator: '孙七', time: '2026-09-22 14:00', status: 'done', comment: '差旅费报销' }, { name: '主管审批', operator: '李四', time: '2026-09-22 15:30', status: 'done', comment: '同意' }, { name: '财务审批', operator: '赵六', time: '2026-09-23 09:00', status: 'done', comment: '已核实票据' }],
+        vars: [{ name: 'amount', value: '3200', type: 'number' }] },
+      { businessKey: 'HT-20260922-008', templateKey: 'contract_approval', templateName: '合同审批', initiator: '赵六', currentNode: '法务审核', status: 'suspended', startTime: '2026-09-22 10:00', duration: '1d4h',
+        steps: [{ name: '提交申请', operator: '赵六', time: '2026-09-22 10:00', status: 'done', comment: '供应商合同续签' }, { name: '法务审核', operator: '钱八', time: '', status: 'current', comment: '' }],
+        vars: [{ name: 'contractValue', value: '500000', type: 'number' }] },
+      { businessKey: 'SB-20260923-002', templateKey: 'equipment_maintenance', templateName: '设备保养流程', initiator: '孙七', currentNode: '-', status: 'completed', startTime: '2026-09-23 08:00', duration: '3h',
+        steps: [{ name: '生成保养任务', operator: '系统', time: '2026-09-23 08:00', status: 'done', comment: '' }, { name: '维修确认', operator: '孙七', time: '2026-09-23 10:30', status: 'done', comment: '保养完成' }, { name: '完成通知', operator: '系统', time: '2026-09-23 10:30', status: 'done', comment: '' }],
+        vars: [{ name: 'equipmentId', value: 'EQ-003', type: 'string' }] },
+      { businessKey: 'LV-20260921-005', templateKey: 'leave_approval', templateName: '请假审批', initiator: '李四', currentNode: '-', status: 'terminated', startTime: '2026-09-21 16:00', duration: '-',
+        steps: [{ name: '提交申请', operator: '李四', time: '2026-09-21 16:00', status: 'done', comment: '已撤销' }],
+        vars: [{ name: 'days', value: '1', type: 'number' }] },
+    ]);
+    const instanceFilter = reactive({ key: '', template: '', status: '' });
+    const filteredInstances = computed(() => instances.value.filter(inst => {
+      if (instanceFilter.key && !inst.businessKey.includes(instanceFilter.key)) return false;
+      if (instanceFilter.template && inst.templateKey !== instanceFilter.template) return false;
+      if (instanceFilter.status && inst.status !== instanceFilter.status) return false;
+      return true;
+    }));
+    const instanceDetailVisible = ref(false);
+    const instanceDetail = ref(null);
+    const instanceVars = ref([]);
+    function instStatusType(s) { return { running: 'warning', completed: 'success', suspended: 'info', terminated: 'danger' }[s] || 'info'; }
+    function instStatusLabel(s) { return { running: '运行中', completed: '已完成', suspended: '已挂起', terminated: '已终止' }[s] || s; }
+    function viewInstance(row) { instanceDetail.value = row; instanceVars.value = row.vars || []; instanceDetailVisible.value = true; }
+    function suspendInstance(row) { row.status = 'suspended'; ElementPlus.ElMessage.success('已挂起'); }
+    function resumeInstance(row) { row.status = 'running'; ElementPlus.ElMessage.success('已恢复'); }
+    function jumpInstance(row) { ElementPlus.ElMessage.info('跳转功能开发中'); }
+    function terminateInstance(row) { ElementPlus.ElMessageBox.confirm('确认终止该流程实例？', '提示', { type: 'warning' }).then(() => { row.status = 'terminated'; ElementPlus.ElMessage.success('已终止'); }).catch(() => {}); }
+
+    // ===== Tasks =====
+    const taskTab = ref('todo');
+    const todoTasks = ref([
+      { id: 1, title: '审批请假申请', templateName: '请假审批', initiator: '张三', businessKey: 'LV-20260923-001', createTime: '2026-09-23 09:00', status: 'pending', urgent: false },
+      { id: 2, title: '审批采购申请', templateName: '采购审批', initiator: '王五', businessKey: 'CG-20260923-003', createTime: '2026-09-23 10:30', status: 'pending', urgent: true },
+      { id: 3, title: '法务审核合同', templateName: '合同审批', initiator: '赵六', businessKey: 'HT-20260922-008', createTime: '2026-09-22 10:00', status: 'pending', urgent: true },
+    ]);
+    const doneTasks = ref([
+      { id: 10, title: '审批报销申请', templateName: '报销审批', initiator: '孙七', businessKey: 'BX-20260922-012', createTime: '2026-09-22 14:00', status: 'approved', duration: '19h', urgent: false },
+      { id: 11, title: '部门审批采购', templateName: '采购审批', initiator: '王五', businessKey: 'CG-20260923-003', createTime: '2026-09-23 10:30', status: 'approved', duration: '30m', urgent: false },
+    ]);
+    const allTasks = computed(() => [...todoTasks.value, ...doneTasks.value]);
+    const currentTasks = computed(() => { if (taskTab.value === 'todo') return todoTasks.value; if (taskTab.value === 'done') return doneTasks.value; return allTasks.value; });
+
+    const approvalVisible = ref(false);
+    const approvalTask = ref(null);
+    const approvalForm = reactive({ result: 'approve', comment: '' });
+    function openApproval(task) { approvalTask.value = task; approvalForm.result = 'approve'; approvalForm.comment = ''; approvalVisible.value = true; }
+    function submitApproval() {
+      const task = todoTasks.value.find(t => t.id === approvalTask.value.id);
+      if (task) { task.status = approvalForm.result === 'approve' ? 'approved' : 'rejected'; todoTasks.value = todoTasks.value.filter(t => t.id !== task.id); doneTasks.value.unshift({ ...task, status: approvalForm.result, duration: '刚刚' }); }
+      approvalVisible.value = false;
+      ElementPlus.ElMessage.success(approvalForm.result === 'approve' ? '审批通过' : '已驳回');
+    }
+    const delegateVisible = ref(false);
+    const delegateForm = reactive({ target: '', remark: '' });
+    function openDelegate(task) { delegateForm.target = ''; delegateForm.remark = ''; delegateVisible.value = true; }
+    function submitDelegate() { if (!delegateForm.target) return ElementPlus.ElMessage.warning('请选择转办人员'); delegateVisible.value = false; ElementPlus.ElMessage.success('已转办给 ' + delegateForm.target); }
+
+    const countersignVisible = ref(false);
+    const countersignForm = reactive({ mode: 'before', users: [], reason: '' });
+    function openCountersign(task) { countersignForm.mode = 'before'; countersignForm.users = []; countersignForm.reason = ''; countersignVisible.value = true; }
+    function submitCountersign() { if (!countersignForm.users.length) return ElementPlus.ElMessage.warning('请选择加签人员'); countersignVisible.value = false; ElementPlus.ElMessage.success('加签成功'); }
+    function viewTaskDetail(task) { ElementPlus.ElMessage.info('任务详情：' + task.title); }
+
+    // ===== Logs =====
+    const logFilter = reactive({ keyword: '', type: '', dateRange: null });
+    const logs = ref([
+      { time: '2026-09-23 14:32', type: 'create', operator: '张三', businessKey: 'LV-20260923-001', templateName: '请假审批', action: '提交请假申请', comment: '年假3天' },
+      { time: '2026-09-23 14:15', type: 'approve', operator: '李四', businessKey: 'CG-20260923-003', templateName: '采购审批', action: '部门审批通过', comment: '同意采购' },
+      { time: '2026-09-23 13:50', type: 'reject', operator: '王五', businessKey: 'BX-20260922-012', templateName: '报销审批', action: '财务审核驳回', comment: '票据不全' },
+      { time: '2026-09-23 11:20', type: 'approve', operator: '赵六', businessKey: 'HT-20260922-008', templateName: '合同审批', action: '法务审核通过', comment: '条款无问题' },
+      { time: '2026-09-23 10:05', type: 'system', operator: '系统', businessKey: 'SB-20260923-002', templateName: '设备保养流程', action: '流程自动完成', comment: '' },
+      { time: '2026-09-23 09:30', type: 'delegate', operator: '李四', businessKey: 'LV-20260922-003', templateName: '请假审批', action: '转办给王五', comment: '出差中' },
+      { time: '2026-09-22 16:00', type: 'create', operator: '管理员', businessKey: '-', templateName: '采购审批', action: '发布模板 v2', comment: '增加服务节点' },
+      { time: '2026-09-22 14:00', type: 'approve', operator: '李四', businessKey: 'BX-20260922-012', templateName: '报销审批', action: '主管审批通过', comment: '费用合理' },
+    ]);
+    const filteredLogs = computed(() => logs.value.filter(l => {
+      if (logFilter.keyword && !l.operator.includes(logFilter.keyword) && !l.businessKey.includes(logFilter.keyword)) return false;
+      if (logFilter.type && l.type !== logFilter.type) return false;
+      return true;
+    }));
+    function logTypeLabel(t) { return { create: '创建', approve: '审批', reject: '驳回', delegate: '转办', system: '系统' }[t] || t; }
+    function exportLogs() { ElementPlus.ElMessage.success('日志导出中...'); }
+
+    // ===== API =====
+    const apiApps = ref([
+      { id: 1, name: 'OA 系统', description: '办公自动化系统集成', apiKey: 'wf_live_k8x2m9p4q7r1', status: 'active', todayCalls: 1284, totalCalls: 89432, createdAt: '2026-07-01' },
+      { id: 2, name: 'ERP 系统', description: '企业资源管理系统', apiKey: 'wf_live_j3n5t8w2y6z4', status: 'active', todayCalls: 856, totalCalls: 45210, createdAt: '2026-08-15' },
+      { id: 3, name: '测试环境', description: '开发测试用', apiKey: 'wf_test_a1b2c3d4e5f6', status: 'disabled', todayCalls: 0, totalCalls: 1230, createdAt: '2026-09-01' },
+    ]);
+    const apiEndpoints = ref([
+      { method: 'POST', path: '/api/v1/process/start', name: '发起流程', description: '根据模板发起新的流程实例', auth: true },
+      { method: 'POST', path: '/api/v1/task/approve', name: '审批任务', description: '审批指定任务（通过/驳回）', auth: true },
+      { method: 'POST', path: '/api/v1/task/delegate', name: '转办任务', description: '将任务转办给其他人员', auth: true },
+      { method: 'GET', path: '/api/v1/process/{id}', name: '查询流程', description: '查询流程实例详情及状态', auth: true },
+      { method: 'GET', path: '/api/v1/task/todo', name: '待办列表', description: '查询指定用户的待办任务', auth: true },
+      { method: 'GET', path: '/api/v1/template/list', name: '模板列表', description: '查询已发布的流程模板', auth: true },
+      { method: 'PUT', path: '/api/v1/process/{id}/suspend', name: '挂起流程', description: '挂起运行中的流程实例', auth: true },
+      { method: 'PUT', path: '/api/v1/process/{id}/resume', name: '恢复流程', description: '恢复已挂起的流程实例', auth: true },
+      { method: 'DELETE', path: '/api/v1/process/{id}', name: '终止流程', description: '终止运行中的流程实例', auth: true },
+      { method: 'POST', path: '/api/v1/webhook/register', name: '注册回调', description: '注册流程事件回调通知', auth: true },
+    ]);
+    function createApp() { ElementPlus.ElMessage.info('新建应用功能开发中'); }
+    function copyKey(key) { ElementPlus.ElMessage.success('API Key 已复制'); }
+    function resetKey(app) { ElementPlus.ElMessageBox.confirm('重置后旧 Key 将失效，确认？', '提示', { type: 'warning' }).then(() => { app.apiKey = 'wf_live_' + Math.random().toString(36).substring(2, 14); ElementPlus.ElMessage.success('Key 已重置'); }).catch(() => {}); }
+
+    // Init designer with default leave flow
+    loadDesignerNodes(templates.value[0]);
+
+    return {
+      currentPage, menus, pageTitle, stats, trendData, donutData, donutSegments, recentActivities,
+      templates, templateSearch, templateStatusFilter, filteredTemplates,
+      templateDialogVisible, templateDialogTitle, templateForm, templateDetailVisible, templateDetail,
+      versionHistoryVisible, versionHistory, tplStatusType, tplStatusLabel,
+      openTemplateDialog, saveTemplate, viewTemplate, showVersionHistory, publishTemplate, disableTemplate, deleteTemplate, editInDesigner, compareVersion, rollbackVersion,
+      instances, instanceFilter, filteredInstances, instanceDetailVisible, instanceDetail, instanceVars,
+      instStatusType, instStatusLabel, viewInstance, suspendInstance, resumeInstance, jumpInstance, terminateInstance,
+      taskTab, todoTasks, doneTasks, currentTasks,
+      approvalVisible, approvalTask, approvalForm, openApproval, submitApproval,
+      delegateVisible, delegateForm, openDelegate, submitDelegate,
+      countersignVisible, countersignForm, openCountersign, submitCountersign, viewTaskDetail,
+      logFilter, filteredLogs, logTypeLabel, exportLogs,
+      apiApps, apiEndpoints, createApp, copyKey, resetKey,
+      canvasNodes, connections, selectedNode, selectedConn, zoomLevel, canvasContainer, drawingConn, drawingPath,
+      nodeTypeLabel, minimapColor, onPaletteDrag, onCanvasDrop, onNodeMouseDown, onCanvasMouseMove, onCanvasMouseUp,
+      startConnection, selectNode, deleteNode, connectionPath, connectionMidX, connectionMidY,
+      undo, redo, zoomIn, zoomOut, autoLayout, validateFlow, saveFlow,
+    };
+  },
+});
+app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component); }
+app.mount('#app');
+</script>
+</body>
+</html>
